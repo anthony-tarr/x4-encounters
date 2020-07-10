@@ -1,0 +1,542 @@
+<?xml version="1.0" encoding="utf-8"?>
+<diff>
+
+	<!-- SCALE PLATE - Additional ship types for encounters -->
+
+
+	<add sel="/jobs/job[@id='scaleplate_plunderer_l_cluster']">
+		<!-- <time interval="1"/> -->
+		<encounters id="plunderer_group"/>
+	</add>
+
+	<add sel="/jobs/job[@id='scaleplate_scavenger_m_cluster']">
+		<encounters id="plunderer_group"/>
+	</add>
+
+	<add sel="/jobs/job[@id='scaleplate_smuggler_s']">
+		<encounters id="lone_plunderer"/>
+	</add>
+
+	<replace sel="/jobs/job[@id='scaleplate_scavenger_sm_deepspace']/quota/@galaxy">18</replace>
+
+	<add sel="/jobs/job[@id='scaleplate_fighter_escort_s']">
+		<encounters id="lone_plunderer"/>
+	</add>
+
+	<!-- HATIKVAH FREE LEAGUE - Additional ship types for encounters -->
+
+	<add sel="/jobs/job[@id='hatikvah_scavenger_m_cluster']">
+		<encounters id="plunderer_group"/>
+	</add>
+
+	<add sel="/jobs/job[@id='hatikvah_scavenger_m_cluster']">
+		<encounters id="plunderer_group"/>
+	</add>
+
+	<!-- DUKE'S BUCCANEERS - Additional ship types for encounters -->
+
+	<add sel="/jobs/job[@id='buc_guerilla_m_cluster']">
+		<encounters id="plunderer_group"/>
+	</add>
+
+	<add sel="/jobs/job[@id='buc_guerilla_infiltrator_s_cluster']">
+		<encounters id="lone_plunderer"/>
+	</add>
+
+	<add sel="/jobs/job[@id='buc_guerilla_escort_m']">
+		<encounters id="plunderer_group"/>
+	</add>
+
+	<add sel="/jobs/job[@id='buc_guerilla_escort_s']">
+		<encounters id="plunderer_group"/>
+	</add>
+
+	<add sel="/jobs/job[@id='buc_carrier_patrol_xl_cluster']">
+		<encounters id="hostile_taskforce"/>
+	</add>
+
+	<add sel="/jobs/job[@id='buc_patrol_m_sector']">
+		<encounters id="plunderer_group"/>
+	</add>
+
+	<add sel="/jobs/job[@id='buc_scout_s']">
+		<encounters id="resource_scout"/>
+	</add>
+
+	<add sel="/jobs/job[@id='buc_destroyer_escort_l']">
+		<encounters id="hostile_taskforce"/>
+	</add>
+
+	<add sel="/jobs/job[@id='buc_frigate_escort_m']">
+		<encounters id="plunderer_group"/>
+	</add>
+
+	<add sel="/jobs/job[@id='buc_fighter_escort_s_frigate']">
+		<encounters id="plunderer_group"/>
+	</add>
+
+	<add sel="/jobs/job[@id='buc_fighter_escort_s_carrier']">
+		<encounters id="plunderer_group"/>
+	</add>
+
+	<!-- XENON - Additional ship types for encounters -->
+
+	<add sel="/jobs/job[@id='xenon_free_miner_m_mineral']">
+		<!-- <time interval="1"/> -->
+		<encounters id="lone_miner"/>
+	</add>
+
+	<add sel="/jobs/job[@id='xenon_destroyer_patrol_xl_cluster']">
+		<!-- <time interval="1"/> -->
+		<!-- <environment buildatshipyard="true"/> -->
+		<encounters id="hostile_taskforce"/>
+	</add>
+
+	<add sel="/jobs/job[@id='xenon_destroyer_patrol_xl_comp']">
+		<!-- <time interval="1"/> -->
+		<!-- <environment buildatshipyard="true"/> -->
+		<encounters id="hostile_taskforce"/>
+	</add>
+
+	<add sel="/jobs/job[@id='xenon_fighter_patrol_s_zone']">
+		<!-- <time interval="1"/> -->
+		<!-- <environment buildatshipyard="true"/> -->
+		<encounters id="xenon_s_group"/>
+	</add>
+
+	<add sel="/jobs/job[@id='xenon_frigate_patrol_m_zone_everywhereelse']">
+		<!-- <time interval="1"/> -->
+		<!-- <environment buildatshipyard="true"/> -->
+		<encounters id="hostile_taskforce"/>
+	</add>
+
+	<add sel="/jobs/job[@id='xenon_scout_patrol_s']">
+		<!-- <time interval="1"/> -->
+		<!-- <environment buildatshipyard="true"/> -->
+		<encounters id="resource_scout"/>
+	</add>
+
+	<replace sel="/jobs/job[@id='xenon_free_miner_m_mineral']/quota/@galaxy">37</replace>
+
+	<add sel="/jobs">
+		<job id="xenon_fighter_escort_m_patrol" name="{20204,3401}" startactive="false">
+			<orders>
+				<order order="Escort" default="true">
+					<!--<param name="formationparam" value="300m"/>-->
+				</order>
+			</orders>
+			<category faction="xenon" tags="[military, medium]" size="ship_m"/>
+			<quota wing="2"/>
+			<location class="galaxy" macro="xu_ep2_universe_macro"/>
+			<environment buildatshipyard="true"/>
+			<modifiers subordinate="true"/>
+			<ship>
+				<select faction="xenon" tags="[military, medium]" size="ship_m"/>
+				<owner exact="xenon" overridenpc="true"/>
+			</ship>
+		</job>
+
+		<job id="xenon_resourcescout_s_deepspace_single" name="{20204,10049}" disabled="false">
+			<modifiers commandeerable="false"/>
+			<orders>
+				<order order="Recon" default="true"/>
+			</orders>
+			<category faction="xenon" tags="[scout]" size="ship_s"/>
+			<quota galaxy="4" cluster="1"/>
+			<!-- <location class="zone" macro="Zone002_Cluster_17_Sector001_macro"/> -->
+			<location class="galaxy" macro="xu_ep2_universe_macro" faction="xenon" relation="self" comparison="exact" matchextension="false" />
+			<environment buildatshipyard="true"/>
+			<basket basket="minerals_xenon"/>
+			<encounters id="resource_scout"/>
+			<ship>
+				<select faction="xenon" tags="[scout]" size="ship_s"/>
+				<loadout>
+					<level min="0" max="0.4"/>
+				</loadout>
+				<owner exact="xenon" overridenpc="true"/>
+			</ship>
+		</job>
+
+		<job id="xenon_free_miner_sm_mineral_group" name="{20204,1901}">
+			<modifiers rebuild="false" commandeerable="true"/>
+			<!--<expirationtime min="14400" max="21600" />-->
+			<orders>
+				<order order="MiningRoutine" default="true">
+					<param name="minbuy" value="0"/>
+					<param name="maxbuy" value="2"/>
+					<param name="minsell" value="0"/>
+					<param name="maxsell" value="2"/>
+				</order>
+			</orders>
+			<basket basket="minerals_xenon"/>
+			<encounters id="mining_group_small"/>
+			<category faction="xenon" tags="[factionlogic, miner]" size="ship_m"/>
+			<quota galaxy="3" cluster="1"/>
+			<!-- <location class="zone" macro="Zone001_Cluster_17_Sector001_macro"/> -->
+			<location class="galaxy" macro="xu_ep2_universe_macro" faction="xenon" relation="member" comparison="ge" regionbasket="minerals_xenon" matchextension="false" />
+			<environment buildatshipyard="true"/>
+			<ship>
+				<select faction="xenon" tags="[miner, solid]" size="class.ship_m"/>
+				<owner exact="xenon" overridenpc="true"/>
+				<cargo>
+					<wares>
+						<fillpercent min="0" max="100" profile="inversebell"/>
+					</wares>
+				</cargo>
+			</ship>
+			<subordinates>
+				<subordinate job="xenon_fighter_escort_s_patrol"/>
+			</subordinates>
+		</job>
+
+		<job id="xenon_free_miner_ms_mineral_group" name="{20204,1901}">
+			<modifiers rebuild="false" commandeerable="true"/>
+			<!--<expirationtime min="14400" max="21600" />-->
+			<orders>
+				<order order="MiningRoutine" default="true">
+					<param name="minbuy" value="0"/>
+					<param name="maxbuy" value="2"/>
+					<param name="minsell" value="0"/>
+					<param name="maxsell" value="2"/>
+				</order>
+			</orders>
+			<basket basket="minerals_xenon"/>
+			<encounters id="mining_group_large"/>
+			<category faction="xenon" tags="[factionlogic, miner]" size="ship_m"/>
+			<quota galaxy="2" cluster="1"/>
+			<!-- <location class="zone" macro="Zone001_Cluster_33_Sector001_macro"/> -->
+			<location class="galaxy" macro="xu_ep2_universe_macro" faction="xenon" relation="member" comparison="ge" regionbasket="minerals_xenon" matchextension="false" />
+			<environment buildatshipyard="true"/>
+			<ship>
+				<select faction="xenon" tags="[miner, solid]" size="class.ship_m"/>
+				<owner exact="xenon" overridenpc="true"/>
+				<cargo>
+					<wares>
+						<fillpercent min="0" max="100" profile="inversebell"/>
+					</wares>
+				</cargo>
+			</ship>
+			<subordinates>
+				<subordinate job="xenon_fighter_escort_s_patrol"/>
+			</subordinates>
+		</job>
+
+		<job id="xenon_fighter_escort_s_patrol" name="{20204,3401}" startactive="false">
+			<orders>
+				<order order="Escort" default="true">
+					<param name="overrideformationskill" value="true"/>
+				</order>
+			</orders>
+			<category faction="xenon" tags="[military, fighter]" size="ship_s"/>
+			<quota wing="22"/>
+			<location class="galaxy" macro="xu_ep2_universe_macro"/>
+			<environment buildatshipyard="true"/>
+			<modifiers subordinate="true"/>
+			<ship>
+				<select faction="xenon" tags="[military, fighter, light]" size="ship_s"/>
+				<owner exact="xenon" overridenpc="true"/>
+			</ship>
+		</job>
+
+		<job id="xenon_free_miner_mm_mineral_group" name="{20204,1901}">
+			<modifiers rebuild="false" commandeerable="true"/>
+			<!--<expirationtime min="14400" max="21600" />-->
+			<orders>
+				<order order="MiningRoutine" default="true">
+					<param name="minbuy" value="0"/>
+					<param name="maxbuy" value="2"/>
+					<param name="minsell" value="0"/>
+					<param name="maxsell" value="2"/>
+				</order>
+			</orders>
+			<basket basket="minerals_xenon"/>
+			<encounters id="mining_group_large"/>
+			<category faction="xenon" tags="[factionlogic, miner]" size="ship_m"/>
+			<quota galaxy="2" cluster="1"/>
+			<!-- <location class="zone" macro="Zone003_Cluster_33_Sector001_macro"/> -->
+			<location class="galaxy" macro="xu_ep2_universe_macro" faction="xenon" relation="member" comparison="ge" regionbasket="minerals_xenon" matchextension="false" />
+			<environment buildatshipyard="true"/>
+			<ship>
+				<select faction="xenon" tags="[miner, solid]" size="class.ship_m"/>
+				<owner exact="xenon" overridenpc="true"/>
+				<cargo>
+					<wares>
+						<fillpercent min="0" max="100" profile="inversebell"/>
+					</wares>
+				</cargo>
+			</ship>
+			<subordinates>
+				<subordinate job="xenon_fighter_escort_m_patrol"/>
+			</subordinates>
+		</job>
+
+	</add>
+
+	<!-- KHAAK - Additional ship types for encounters -->
+
+	<replace sel="/jobs/job[@id='khaak_fighter_escort_s']/quota/@wing">6</replace>
+
+	<replace sel="/jobs/job[@id='khaak_fighter_s_deepspace_single']/quota/@galaxy">10</replace>
+	<replace sel="/jobs/job[@id='khaak_fighter_s_deepspace_single']/category[@size='ship_m']/@size">ship_s</replace>
+	<replace sel="/jobs/job[@id='khaak_fighter_s_deepspace_single']/ship/select[@size='ship_m']/@size">ship_s</replace>
+
+	<replace sel="/jobs/job[@id='khaak_fighter_s_deepspace_group']">
+		<job id="khaak_fighter_s_deepspace_group" name="{20204,3401}" disabled="false">
+			<modifiers commandeerable="false"/>
+			<orders>
+				<order order="Patrol" default="true">
+					<param name="range" value="class.zone"/>
+				</order>
+			</orders>
+			<category faction="khaak" tags="[fighter]" size="ship_s"/>
+			<quota galaxy="4"/>
+			<location class="zone" macro="Zone002_Cluster_16_Sector001_macro"/>
+			<environment buildatshipyard="false" gate="true"/>
+			<encounters id="khaak_s_group"/>
+			<ship>
+				<select faction="khaak" tags="[fighter]" size="ship_s"/>
+				<owner exact="khaak" overridenpc="true"/>
+			</ship>
+			<subordinates>
+				<subordinate job="khaak_fighter_escort_s"/>
+			</subordinates>
+		</job>
+	</replace>
+
+	<add sel="/jobs">
+
+		<job id="khaak_fighter_escort_m" name="{20204,3401}" startactive="false">
+			<modifiers commandeerable="false"/>
+			<orders>
+				<order order="Escort" default="true">
+					<param name="formation" value="formationshape.halfcircle"/>
+					<!-- ship width -->
+					<param name="formationparam" value="32.6274m"/>
+					<param name="rollformation" value="true"/>
+					<param name="overrideformationskill" value="true"/>
+				</order>
+			</orders>
+			<category faction="khaak" tags="[military, fighter]" size="ship_m"/>
+			<quota wing="3"/>
+			<location class="galaxy" macro="xu_ep2_universe_macro"/>
+			<environment buildatshipyard="false" gate="true"/>
+			<encounters id="khaak_s_group"/>
+			<modifiers subordinate="true"/>
+			<ship>
+				<select faction="khaak" tags="[military, fighter]" size="ship_m"/>
+				<owner exact="khaak" overridenpc="true"/>
+			</ship>
+		</job>
+
+		<job id="khaak_fighter_m_deepspace_single" name="{20204,3401}" disabled="false">
+			<modifiers commandeerable="false"/>
+			<orders>
+				<order order="Patrol" default="true">
+					<param name="range" value="class.zone"/>
+				</order>
+			</orders>
+			<category faction="khaak" tags="[military, fighter]" size="ship_m"/>
+			<quota galaxy="5"/>
+			<location class="zone" macro="Zone002_Cluster_16_Sector001_macro"/>
+			<environment buildatshipyard="false" gate="true"/>
+			<encounters id="khaak_s_lone"/>
+			<ship>
+				<select faction="khaak" tags="[military,fighter]" size="ship_m"/>
+				<owner exact="khaak" overridenpc="true"/>
+			</ship>
+		</job>
+
+		<job id="khaak_fighter_m_deepspace_group" name="{20204,3401}" disabled="false">
+			<modifiers commandeerable="false"/>
+			<orders>
+				<order order="Patrol" default="true">
+					<param name="range" value="class.zone"/>
+				</order>
+			</orders>
+			<category faction="khaak" tags="[military, fighter]" size="ship_m"/>
+			<quota galaxy="2"/>
+			<location class="zone" macro="Zone002_Cluster_37_Sector001_macro"/>
+			<environment buildatshipyard="false" gate="true"/>
+			<encounters id="khaak_s_group"/>
+			<ship>
+				<select faction="khaak" tags="[military,fighter]" size="ship_m"/>
+				<owner exact="khaak" overridenpc="true"/>
+			</ship>
+			<subordinates>
+				<subordinate job="khaak_fighter_escort_s"/>
+			</subordinates>
+		</job>
+
+		<job id="khaak_fighter_s_deepspace_swarm" name="{20204,3401}" disabled="false">
+			<modifiers commandeerable="false"/>
+			<orders>
+				<order order="Patrol" default="true">
+					<param name="range" value="class.zone"/>
+				</order>
+			</orders>
+			<category faction="khaak" tags="[fighter]" size="ship_s"/>
+			<quota galaxy="3"/>
+			<location class="zone" macro="Zone002_Cluster_16_Sector001_macro"/>
+			<environment buildatshipyard="false" gate="true"/>
+			<encounters id="khaak_swarm"/>
+			<ship>
+				<select faction="khaak" tags="[fighter]" size="ship_s"/>
+				<owner exact="khaak" overridenpc="true"/>
+			</ship>
+			<subordinates>
+				<subordinate job="khaak_fighter_escort_s"/>
+				<subordinate job="khaak_fighter_escort_s"/>
+			</subordinates>
+		</job>
+
+		<job id="khaak_m_deepspace_swarm" name="{20204,3401}" disabled="false">
+			<modifiers commandeerable="false"/>
+			<orders>
+				<order order="Patrol" default="true">
+					<param name="range" value="class.zone"/>
+				</order>
+			</orders>
+			<category faction="khaak" tags="[military, fighter]" size="ship_m"/>
+			<quota galaxy="1"/>
+			<location class="zone" macro="Zone005_Cluster_45_Sector001_macro"/>
+			<environment buildatshipyard="false" gate="true"/>
+			<encounters id="khaak_swarm"/>
+			<ship>
+				<select faction="khaak" tags="[military,fighter]" size="ship_m"/>
+				<owner exact="khaak" overridenpc="true"/>
+			</ship>
+			<subordinates>
+				<subordinate job="khaak_fighter_escort_s"/>
+				<subordinate job="khaak_fighter_escort_s"/>
+			</subordinates>
+		</job>
+
+		<job id="khaak_l_deepspace_swarm" name="{20204,3401}" disabled="false">
+			<modifiers commandeerable="false"/>
+			<orders>
+				<order order="Patrol" default="true">
+					<param name="range" value="class.zone"/>
+				</order>
+			</orders>
+			<category faction="khaak" tags="[military, fighter]" size="ship_m"/>
+			<quota galaxy="2"/>
+			<location class="zone" macro="Zone002_Cluster_16_Sector001_macro"/>
+			<environment buildatshipyard="false" gate="true"/>
+			<encounters id="khaak_swarm"/>
+			<ship>
+				<select faction="khaak" tags="[military, fighter]" size="ship_m"/>
+				<owner exact="khaak" overridenpc="true"/>
+			</ship>
+			<subordinates>
+				<subordinate job="khaak_fighter_escort_s"/>
+				<subordinate job="khaak_fighter_escort_m"/>
+			</subordinates>
+		</job>
+
+		<job id="khaak_xl_deepspace_swarm" name="{20204,3401}" disabled="false">
+			<modifiers commandeerable="false"/>
+			<orders>
+				<order order="Patrol" default="true">
+					<param name="range" value="class.zone"/>
+				</order>
+			</orders>
+			<category faction="khaak" tags="[military, fighter]" size="ship_m"/>
+			<quota galaxy="1"/>
+			<location class="zone" macro="Zone002_Cluster_16_Sector001_macro"/>
+			<environment buildatshipyard="false" gate="true"/>
+			<encounters id="khaak_swarm"/>
+			<ship>
+				<select faction="khaak" tags="[military, fighter]" size="ship_m"/>
+				<owner exact="khaak" overridenpc="true"/>
+			</ship>
+			<subordinates>
+				<subordinate job="khaak_fighter_escort_s"/>
+				<subordinate job="khaak_fighter_escort_m"/>
+				<subordinate job="khaak_fighter_escort_m"/>
+			</subordinates>
+		</job>
+
+	</add>
+
+	<!-- Split Vendetta DLC -->
+
+
+	<add silent="true" sel="/jobs/job[@id='zyarth_destroyer_patrol_l_border_sector_colonial']">
+		<encounters id="hostile_taskforce"/>
+	</add>
+
+	<add silent="true" sel="/jobs/job[@id='zyarth_corvette_patrol_m_sector_exp']">
+		<encounters id="plunderer_group"/>
+	</add>
+
+	<add silent="true" sel="/jobs/job[@id='freesplit_marauder_mixed_cluster']">
+		<encounters id="lone_plunderer"/>
+	</add>
+
+	<add silent="true" sel="/jobs/job[@id='freesplit_scavenger_m_cluster']">
+		<encounters id="lone_plunderer"/>
+	</add>
+
+	<add silent="true" sel="/jobs/job[@id='freesplit_smuggler_s']">
+		<encounters id="lone_plunderer"/>
+	</add>
+
+	<add silent="true" sel="/jobs/job[@id='fallensplit_marauder_mixed_cluster']">
+		<encounters id="lone_plunderer"/>
+	</add>
+
+	<add silent="true" sel="/jobs/job[@id='fallensplit_raider_mixed_cluster']">
+		<encounters id="plunderer_group"/>
+	</add>
+
+
+	<!-- POLICE -->
+
+	<!-- Rebalance sector police ( from sector/station = 1 / 5 ) -->
+
+	<replace sel="/jobs/job[@id='argon_police_patrol_s']/quota/@sector">1</replace>
+	<replace sel="/jobs/job[@id='masstraffic_argon_police']/quota/@station">4</replace>
+
+	<replace sel="/jobs/job[@id='paranid_police_patrol_s']/quota/@sector">2</replace>
+	<replace sel="/jobs/job[@id='masstraffic_paranid_police']/quota/@station">9</replace>
+
+	<replace sel="/jobs/job[@id='holyorder_police_patrol_s']/quota/@sector">1</replace>
+	<replace sel="/jobs/job[@id='masstraffic_holyorder_police']/quota/@station">6</replace>
+
+	<replace sel="/jobs/job[@id='ministry_frigate_police_patrol_m']/quota/@sector">1</replace>
+	<replace sel="/jobs/job[@id='masstraffic_teladi_police']/quota/@station">1</replace>
+
+	<!-- Split Vendetta DLC -->
+
+	<replace silent="true" sel="/jobs/job[@id='zyarth_police_patrol_s']/quota/@sector">1</replace>
+	<replace silent="true" sel="/jobs/job[@id='masstraffic_split_police']/quota/@station">4</replace>
+
+	<replace silent="true" sel="/jobs/job[@id='court_police_patrol_s']/quota/@sector">2</replace>
+
+	<!-- CRIMINALS -->
+
+	<!-- Rebalance criminal mass traffic ( from quota sector/station = 2/1 : spawndelay = 300 : relaunchdelay = 60 ) -->
+
+	<replace sel="/jobs/job[@id='masstraffic_argon_criminal']/quota/@sector">3</replace>
+	<replace sel="/jobs/job[@id='masstraffic_argon_criminal']/quota/@station">1</replace>
+	<replace sel="/jobs/job[@id='masstraffic_argon_criminal']/masstraffic/@respawndelay">254</replace>
+	<replace sel="/jobs/job[@id='masstraffic_argon_criminal']/masstraffic/@relaunchdelay">102</replace>
+
+	<replace sel="/jobs/job[@id='masstraffic_teladi_criminal']/quota/@sector">1</replace>
+	<replace sel="/jobs/job[@id='masstraffic_teladi_criminal']/quota/@station">1</replace>
+	<replace sel="/jobs/job[@id='masstraffic_teladi_criminal']/masstraffic/@respawndelay">1125</replace>
+	<replace sel="/jobs/job[@id='masstraffic_teladi_criminal']/masstraffic/@relaunchdelay">450</replace>
+
+	<replace sel="/jobs/job[@id='masstraffic_paranid_criminal']/quota/@sector">4</replace>
+	<replace sel="/jobs/job[@id='masstraffic_paranid_criminal']/quota/@station">2</replace>
+	<replace sel="/jobs/job[@id='masstraffic_paranid_criminal']/masstraffic/@respawndelay">200</replace>
+	<replace sel="/jobs/job[@id='masstraffic_paranid_criminal']/masstraffic/@relaunchdelay">80</replace>
+
+	<!-- Split Vendetta DLC -->
+
+	<replace silent="true" sel="/jobs/job[@id='masstraffic_split_criminal']/quota/@sector">2</replace>
+	<replace silent="true" sel="/jobs/job[@id='masstraffic_split_criminal']/quota/@station">1</replace>
+	<replace silent="true" sel="/jobs/job[@id='masstraffic_split_criminal']/masstraffic/@respawndelay">388</replace>
+	<replace silent="true" sel="/jobs/job[@id='masstraffic_split_criminal']/masstraffic/@relaunchdelay">155</replace>
+
+</diff>

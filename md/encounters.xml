@@ -1,0 +1,2143 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<diff>
+	<replace sel="/mdscript[@name='Encounters']/cues">
+		<cues>
+			<!--***Signal cues***-->
+
+			<!--event.param Encounter position relative to the player (usually just straight in front e.g. [x,y,60km]) - the encounter itself can modify this-->
+			<cue name="NewEncounterPosition" instantiate="true">
+				<conditions>
+					<event_cue_signalled/>
+				</conditions>
+				<actions>
+					<!-- Do you want ship encounters? (On = 1 / Off = 0) -->
+					<set_value name="Manager.$EnableShipEncounters" exact="1"/>
+
+					<!-- Encounter condition timer : minimum : default 20s -->
+					<set_value name="$EncounterFrequencyMin" exact="1s"/>
+					<!-- Encounter condition timer : maximum : default 40s -->
+					<set_value name="$EncounterFrequencyMax" exact="2s"/>
+
+					<!-- Increase vessel encounters ( for distances < 6 * DeepSpace ) -->
+					<set_value name="Manager.$EncounterVesselChance" exact="[ 20, 4 - (player.ship.distanceto.{player.sector} / ( 3 * player.sector.coresize ))i ].max" />
+					<!-- <set_value name="Manager.$EncounterVesselChance" exact="50" /> -->
+
+					<!-- Probability of object encounters , was 7-->
+					<set_value name="Manager.$EncounterSubObjChance" exact="7" />
+
+					<!-- Maximum number of sub-encounters which can occur together (does not include vessels) -->
+					<set_value name="Manager.$EncounterSubObjMax" exact="2"/>
+
+					<!-- Maximum number of encounters which can occur together (does not include sub-encounters)-->
+					<set_value name="Manager.$EncounterInstancesMax" min="100" />
+
+					<!-- <set_value name="Manager.$NextCheckTime" min="(player.age)i + $EncounterFrequencyMin" max="(player.age)i + $EncounterFrequencyMax"/> -->
+					<set_value name="Manager.$NextCheckTime" min="5s" max="10s"/>
+
+					<set_value name="Manager.$EncounterInstances" exact="0"/>
+
+					<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Zone    : Encounter Inst/Min/Max %s/%ss/%ss Vessel/SubObj %s%%/%s%% Trade/Fight %s/%s'.[(player.age)i, Manager.$EncounterInstancesMax, $EncounterFrequencyMin, $EncounterFrequencyMax, Manager.$EncounterVesselChance, Manager.$EncounterSubObjChance, stat.trade_rank, stat.fight_rank ]" output="true" append="true" />
+				</actions>
+			</cue>
+
+			<cue name="Manager" namespace="this">
+				<actions>
+					<set_value name="$EncounterInstances" exact="0"/>
+					<set_value name="$EncounterInstancesMax" min="[1, (stat.fight_rank/3)].max" max="[1, 1+(stat.fight_rank/2)].max" />
+					<set_value name="$NextCheckTime" min="(player.age)i + 20s" max="(player.age)i + 40s"/>
+					<set_value name="$DebugChance" exact="0" />
+					<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Manager : Encounter Max %s Trade/Fight %s/%s'.[(player.age)i, $EncounterInstancesMax, stat.trade_rank, stat.fight_rank ]" output="true" append="true" />
+				</actions>
+				<cues>
+					<cue name="NewEncounterShipActivated" instantiate="true">
+						<conditions>
+							<event_job_ship_activated/>
+							<check_value value="event.param.isoperational and event.param.isencountership"/>
+						</conditions>
+						<actions>
+							<set_value name="$DebugChance" exact="0" />
+							<set_value name="$NewShip" exact="event.param"/>
+							<set_value name="$KhaakChance" exact="if player.ship then [ 50, (player.ship.distanceto.{player.sector} / ( 1 * player.sector.coresize ))i ].min else 0"/>
+							<!-- Increase Khaak base chance ( +1% for distances > 3 * DeepSpace ) -->
+							<do_if value="$NewShip">
+								<do_if value="$NewShip.encounterid == 'lone_plunderer'">
+									<signal_cue_instantly cue="DeepSpace_Encounter" param="[ $NewShip, 5, 2 ]"/>
+									<!-- LeadShip, EncounterChance, EncounterFilter (resource multiplier (13xkm) or security divisor (both high is more frequent)) -->
+								</do_if>
+								<do_if value="$NewShip.encounterid == 'plunderer_group'">
+									<signal_cue_instantly cue="DeepSpace_Encounter" param="[ $NewShip, 1, 2 ]"/>
+								</do_if>
+								<do_elseif value="$NewShip.encounterid == 'resource_scout'">
+									<signal_cue_instantly cue="DeepSpace_Encounter" param="[ $NewShip, 3, 6 ]"/>
+								</do_elseif>
+								<do_elseif value="$NewShip.encounterid == 'lone_miner'">
+									<signal_cue_instantly cue="DeepSpace_Encounter" param="[ $NewShip, 4, 5 ]"/>
+								</do_elseif>
+								<do_elseif value="$NewShip.encounterid == 'mining_group_small'">
+									<signal_cue_instantly cue="DeepSpace_Encounter" param="[ $NewShip, 3, 4 ]"/>
+								</do_elseif>
+								<do_elseif value="$NewShip.encounterid == 'mining_group_large'">
+									<signal_cue_instantly cue="DeepSpace_Encounter" param="[ $NewShip, 2, 3 ]"/>
+								</do_elseif>
+								<do_elseif value="$NewShip.encounterid == 'xenon_s_lone'">
+									<signal_cue_instantly cue="DeepSpace_Encounter" param="[ $NewShip, 4, 2 ]"/>
+								</do_elseif>
+								<do_elseif value="$NewShip.encounterid == 'xenon_s_group'">
+									<signal_cue_instantly cue="DeepSpace_Encounter" param="[ $NewShip, 3, 2 ]"/>
+								</do_elseif>
+								<do_elseif value="$NewShip.encounterid == 'hostile_taskforce'">
+									<signal_cue_instantly cue="DeepSpace_Encounter" param="[ $NewShip, 1, 2 ]"/>
+								</do_elseif>
+								<do_elseif value="$NewShip.encounterid == 'khaak_s_lone'">
+									<signal_cue_instantly cue="DeepSpace_Encounter" param="[ $NewShip, 3+$KhaakChance, 2+$KhaakChance ]"/>
+								</do_elseif>
+								<do_elseif value="$NewShip.encounterid == 'khaak_s_group'">
+									<signal_cue_instantly cue="DeepSpace_Encounter" param="[ $NewShip, 2+$KhaakChance, 2+$KhaakChance ]"/>
+								</do_elseif>
+								<do_elseif value="$NewShip.encounterid == 'khaak_swarm'">
+									<signal_cue_instantly cue="DeepSpace_Encounter" param="[ $NewShip, 1+$KhaakChance, 1+$KhaakChance ]"/>
+								</do_elseif>
+							</do_if>
+							<remove_value name="$NewShip"/>
+						</actions>
+					</cue>
+
+					<cue name="PlayerChangedZone" instantiate="true">
+						<conditions>
+							<event_object_changed_zone object="player.entity"/>
+							<check_age min="$NextCheckTime"/>
+							<check_value value="event.param2 and event.param.sector == event.param2.sector"/>
+							<check_value value="player.ship"/>
+							<check_value value="player.sector and (player.ship.distanceto.[player.sector, player.sector.coreposition] gt (player.sector.coresize/2))"/>
+						</conditions>
+						<delay min="0.5s" max="1s"/>
+						<actions>
+
+							<set_value name="$SectorDeepSpaceValue" exact="( player.sector.coresize / 2km )i" />
+							<set_value name="$SectorCenterDistance" exact="player.ship.distanceto.{player.sector}/1km" />
+
+							<set_value name="$ForwardDistance" min="player.ship.maxradarrange * 1.1" max="player.ship.maxradarrange * 1.3"/>
+							<set_value name="$EncounterPosition" exact="position.[0m, 0m, $ForwardDistance]"/>
+
+							<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Zone    : %s (%s) Distance/DeepSpace = %s/%skm Trade/Fight = %s/%s Khaak +%s%%'.[(player.age)i, player.sector.name, player.sector.security, ($SectorCenterDistance)i, $SectorDeepSpaceValue, stat.trade_rank, stat.fight_rank, $KhaakChance ]" output="true" append="true" />
+
+							<create_position name="$EncounterSectorPosition" object="player.ship" z="$ForwardDistance" space="player.sector"/>
+
+							<do_if value="player.sector.distanceto.{$EncounterSectorPosition} gt ( $SectorDeepSpaceValue - 20km )">
+
+								<create_list name="$ObjectsNearCheckList" />
+								<append_list_elements name="$ObjectsNearCheckList" other="[ class.ship_xs, class.ship_s, class.ship_l, class.ship_xl, class.collectableammo, class.collectablewares, class.mine, class.navbeacon, class.resourceprobe, class.satellite, class.station ]"/>
+
+								<!-- Avoids detection of normal game objects closer to sector center -->
+
+								<do_if value="player.ship.distanceto.{player.sector} gt player.sector.coresize">
+									<append_list_elements name="$ObjectsNearCheckList" other="[ class.asteroid, class.lockbox ]" />
+								</do_if>
+
+								<!-- <debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Space2  : Known objects @ %skm (%s-%s) %s'.[(player.age)i, (1.2 * $SectorCenterDistance)i, player.ship.distanceto.{player.sector}, player.sector.coresize, $ObjectsNearCheckList]" output="true" append="true" chance="100" /> -->
+
+								<find_object groupname="$ObjectsNearPlayer" space="player.sector" class="$ObjectsNearCheckList" multiple="true" sortbydistanceto="player.ship">
+									<match_distance object="player.ship" max="8 * player.ship.maxradarrange" />
+									<match_is_in_view_of object="player.ship" horizontal="120deg" vertical="90deg" />
+									<match owner="[ faction.player, faction.xenon, faction.khaak ]" negate="true" />
+								</find_object>
+
+								<do_if value="$ObjectsNearPlayer.count == 0 ">
+									<set_value name="Manager.$EncAsteroidChance" exact="[4,((4000-sqrt(($SectorCenterDistance-3000)^2))/200)i ].max" />
+									<set_value name="Manager.$EncWreckChance" exact="[3,((5000-sqrt(($SectorCenterDistance-300)^2))/180)i  ].max" />
+									<set_value name="Manager.$EncProbeChance" exact="[2,((4000-sqrt(($SectorCenterDistance-1500)^2))/220)i ].max" />
+									<set_value name="Manager.$EncDefenceGridChance" exact="[3,((1100-sqrt(($SectorCenterDistance-1000)^2))/60)i  ].max" />
+									<set_value name="Manager.$EncMineFieldChance" exact="[0,((1200-sqrt(($SectorCenterDistance-2900)^2))/120)i ].max" />
+									<set_value name="Manager.$EncCrateChance" exact="[3,((4000-sqrt(($SectorCenterDistance-1500)^2))/250)i ].max" />
+									<set_value name="Manager.$EncLockBoxChance" exact="[2,((3500-sqrt(($SectorCenterDistance-3000)^2))/250)i ].max" />
+									<set_value name="Manager.$EncSalvageChance" exact="[1,((3000-sqrt(($SectorCenterDistance-2500)^2))/400)i ].max" />
+									<set_value name="Manager.$EncRareChance" exact="[0,((3000-sqrt(($SectorCenterDistance-4000)^2))/150)i ].max" />
+									<set_value name="Manager.$EncMinesChance" exact="2 * ( Manager.$EncDefenceGridChance + Manager.$EncMineFieldChance )" />
+
+									<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Zone    : Ast %s%% Debris %s%% Probe %s%% Mine %s%%/%s%% Crate %s%% Lbx %s%% Ship %s%% Rare %s%%'.[(player.age)i, Manager.$EncAsteroidChance, Manager.$EncWreckChance, Manager.$EncProbeChance, Manager.$EncDefenceGridChance, Manager.$EncMineFieldChance, Manager.$EncCrateChance, Manager.$EncLockBoxChance, Manager.$EncSalvageChance, Manager.$EncRareChance ]" output="true" append="true" />
+									<!-- <debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Faction : Split Factions/Patriarchy/Curbs %s,%s,%s'.[(player.age)i, md.$SplitFactions, md.$SplitPatriarchyFactions, md.$SplitCurbFactions ]" output="true" append="true" /> -->
+
+									<!-- Insert Faction relation check here? -->
+
+									<signal_cue_instantly cue="NewEncounterPosition" param="$EncounterPosition" check="false"/>
+								</do_if>
+								<do_else>
+									<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Space   : Known object within %skm (%s/%s) - vessel encounters only'.[(player.age)i, ($ObjectsNearPlayer.{1}.distanceto.{player.ship}/1km)i, $ObjectsNearPlayer.{1}.class, $ObjectsNearPlayer.{1}.name ]" output="true" append="true" chance="100" />
+								</do_else>
+
+								<clear_list list="$ObjectsNearCheckList" />
+								<clear_group group="$ObjectsNearPlayer" />
+
+							</do_if>
+
+						</actions>
+					</cue>
+
+				</cues>
+			</cue>
+
+			<!-- Encounter behaviours -->
+
+			<cue name="DeepSpace_Encounter" instantiate="true" namespace="this" version="2">
+				<conditions>
+					<event_cue_signalled/>
+				</conditions>
+				<actions>
+					<set_value name="$DebugChance" exact="Manager.$DebugChance"/>
+					<set_value name="$LeadShip" exact="event.param.{1}"/>
+					<set_value name="$EncounterChance" exact="event.param.{2}" comment="Chance out of 100"/>
+					<set_value name="$EncounterFilter" exact="event.param.{3}" comment="Security Divisor or resource distance multiplyer (x13km)"/>
+					<set_value name="$WarpedSubordinates" exact="[]"/>
+				</actions>
+
+				<patch sinceversion="2">
+					<set_value name="$V150_patch"/>
+				</patch>
+
+				<cues>
+
+					<!-- LIBRARIES -->
+
+					<library name="EncounterCreateName">
+						<actions>
+							<set_value name="$EncounterNameType1" exact="['Alpha','Beta','Gamma','Delta','Epsilon','Zeta','Eta','Theta','Iota','Kappa','Lambda','Mu','Nu','Xi','Omicron','Pi','Rho','Sigma','Tau','Upsilon','Phi','Chi','Psi','Omega'].random + ' '" />
+							<do_if value="not $EncounterObjMacro.isclass.navbeacon">
+								<set_value name="$EncounterNameType2" exact="['Atlas','Bravo','Corona','Dryad','Echo','Foxtrot','Gold','Hydra','Indigo','Juno','Kilo','Lima','Moonrat','Nectar','Ovo','Polka','Qubic','Roma','Sphinx','Triton','Unicorn','Victor','Wisp','Yolanda','Equis','Zulu'].random + ' '" />
+								<set_value name="$EncounterNameType3" exact="['A','B','C','D','E','F','G','H','J','K','L','M','N','P','R','S','T','U','V','W','X','Y','Z'].random" />
+								<set_value name="$EncounterNameSLabs" exact="['Anomaly','Astro','Bio','Botany','Boson','Cell','Chemo','Deep','Electron','Fermion','Flux','Gamma','Genetic','Gluon','Graviton','Helium','Hydrogen','Ice','Ion','Immuno','Kaon','Lamda','Lepton','Micro Biological','Methane','Molecular','Monitoring','Muon','Neutrino','Neutron','Nividium','Omega','Particle','Pion','Photon','Proton','Quantum','Quark','Quasar','Research','Silicon','Spacefly','SubWarp','Tau','Tachyon','Viro','Warp','Xeno','Xeno Biological','X-ray','Zulu'].random" />
+								<do_if value="[ 'Research', 'Micro Biological', 'Xeno Biological' ].indexof.{$EncounterNameSLabs} == 0">
+									<set_value name="$EncounterNameSLabs" exact="$EncounterNameSLabs + ' Research '" />
+								</do_if>
+								<do_any>
+									<do_all weight="60">
+										<set_value name="$EncounterNameSLabs" exact="['Deepspace ','Experimental ','Military ','Research ','Scientific '].random" />
+										<set_value name="$EncounterNameType1" exact="$EncounterNameType2" chance="70" />
+									</do_all>
+									<do_all weight="40">
+										<do_any>
+											<set_value name="$EncounterNameType1" exact="$EncounterNameType2" chance="35" />
+											<set_value name="$EncounterNameType1" exact="$EncounterNameType3" chance="35" />
+											<set_value name="$EncounterNameType1" exact="' '" chance="30" />
+										</do_any>
+									</do_all>
+								</do_any>
+							</do_if>
+						</actions>
+					</library>
+
+					<!-- FACTIONS -->
+
+					<library name="EncounterSetFaction">
+						<!-- [faction.hatikvah, faction.scaleplate, faction.alliance, faction.buccaneers, faction.trinity ] Piratey Civs -->
+						<!-- Set Faction of Encounter Objects -->
+						<actions>
+							<set_value name="$SectorOwner" exact="player.sector.owner" />
+
+							<!-- Set Enemy factions -->
+							<get_factions_by_relation result="$EnemyFactions" faction="player.sector.owner" relation="killmilitary"/>
+							<!-- <debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Faction : KillMilitary (%s) %s '.[(player.age)i, player.sector.owner, $EnemyFactions ]" output="true" append="true" /> -->
+
+							<create_list name="$EnemyFactionList" />
+							<do_all exact="$EnemyFactions.count" counter="$i">
+								<do_if value="$EnemyFactions.{$i}.relationto.{player.sector.owner} gt -0.32 and lookup.faction.{$i}.isactive" comment="Selects factions between killmilitary (-0.1) and start of kill (-0.32)">
+									<!-- <debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Faction : Adding %s (%s)'.[(player.age)i, @$EnemyFactions.{$i}, $EnemyFactions.{$i}.relationto.{player.sector.owner} ]" output="true" append="true" /> -->
+									<append_to_list name="$EnemyFactionList" exact="$EnemyFactions.{$i}"/>
+								</do_if>
+
+							</do_all>
+							<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Faction : Alternate hostiles %s'.[(player.age)i, $EnemyFactionList ]" output="true" append="true" chance="100"/>
+
+							<set_value name="$RandomEnemyFaction" exact="if $EnemyFactionList.count then $EnemyFactionList.random else faction.scaleplate"/>
+
+							<!-- Teladi objects will generally be owned by the Ministry, more so in high security sectors -->
+							<do_if value="$SectorOwner == faction.teladi" chance="15 + (100 * player.sector.security)">
+								<set_value name="$SectorOwner" exact="faction.ministry" />
+							</do_if>
+
+							<!-- The most probable ownership will always be biased towards the sector owner (greater in high security sectors) -->
+							<set_value name="$EncounterFactionList" exact="[ $SectorOwner ]" />
+
+							<set_value name="$SectorLoopCount" exact="( [ 1 + (3 * player.sector.security)-(player.ship.distanceto.{player.sector}/1500km), 0 ].max )i" />
+							<set_value name="$ParanidSector" exact="if [ faction.paranid, faction.holyorder, faction.alliance, faction.buccaneers, faction.trinity ].indexof.{player.sector.owner} == 0 then 1 else 2" />
+							<set_value name="$SplitSector" exact="if md.$SplitFactions.indexof.{player.sector.owner} == 0 then 1 else 2" />
+
+							<do_if value="$EncounterType != tag.defencegrid and player.ship.distanceto.{player.sector} gt ( 2 * player.sector.security * player.sector.coresize)">
+								<do_all exact="$SectorLoopCount" counter="$i">
+									<append_to_list name="$EncounterFactionList" exact="$SectorOwner" />
+								</do_all>
+
+								<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Owner   : Base %s (%s %s %s)'.[(player.age)i, $EncounterFactionList, $SectorLoopCount, 3 * player.sector.security, player.ship.distanceto.{player.sector}/1500km ]" output="true" append="true" />
+
+								<!-- Add factions to the list when in non-Khaak/Xenon sectors -->
+								<do_if value="[ faction.khaak, faction.xenon ].indexof.{player.sector.owner} == 0">
+									<do_if value="player.sector.owner == faction.holyorder">
+										<append_to_list name="$EncounterFactionList" exact="faction.holyorder" chance="5" />
+									</do_if>
+									<do_else>
+										<!-- Argon associated factions -->
+										<append_to_list name="$EncounterFactionList" exact="faction.argon" chance="27 / [ $ParanidSector, 10 * $SplitSector ].max" />
+										<do_if value="[ faction.argon, faction.antigone, faction.hatikvah ].indexof.{player.sector.owner} != 0">
+											<append_to_list name="$EncounterFactionList" exact="faction.antigone" chance=" 9 " />
+											<append_to_list name="$EncounterFactionList" exact="faction.hatikvah" chance=" 3 " />
+										</do_if>
+										<!-- Teladi associated factions -->
+										<append_to_list name="$EncounterFactionList" exact="faction.teladi" chance="23 / [ $ParanidSector, $SplitSector ].max" />
+										<append_to_list name="$EncounterFactionList" exact="faction.ministry" chance=" 3 / [ $ParanidSector, $SplitSector ].max" />
+										<!-- Paranid associated factions -->
+										<append_to_list name="$EncounterFactionList" exact="faction.paranid" chance="7" />
+									</do_else>
+									<!-- Split, Pirate and other miscellaneous factions -->
+									<set_value name="$SectorLoopCount" exact="4-$SectorLoopCount" />
+									<do_all exact="$SectorLoopCount" counter="$i">
+										<do_if value="md.$SplitFactions.count != 0">
+											<append_to_list name="$EncounterFactionList" exact="md.$SplitPatriarchyFactions.random" chance="if md.$SplitPatriarchyFactions.count then ($i + 11 * $SplitSector) else 0" />
+											<append_to_list name="$EncounterFactionList" exact="md.$SplitCurbFactions.random" chance="if md.$SplitFactions.indexof.{player.sector.owner} == 0 then 0 else ($i + 7 * $SplitSector)" />
+										</do_if>
+										<append_to_list name="$EncounterFactionList" exact="faction.alliance" chance="$i + 4 * $ParanidSector" />
+										<append_to_list name="$EncounterFactionList" exact="faction.buccaneers" chance="$i + 3 * $ParanidSector" />
+										<append_to_list name="$EncounterFactionList" exact="faction.hatikvah" chance="3" />
+										<append_to_list name="$EncounterFactionList" exact="faction.scaleplate" chance="$i + 11" />
+										<append_to_list name="$EncounterFactionList" exact="faction.trinity" chance="$i + 7 * $ParanidSector/$SplitSector" />
+										<append_to_list name="$EncounterFactionList" exact="$RandomEnemyFaction" chance="$i + 2 * [ $ParanidSector, $SplitSector ].max" />
+										<append_to_list name="$EncounterFactionList" exact="md.$DLCPirateFactions.random" chance="if md.$DLCPirateFactions.count then ($i + 3 * $SplitSector) else 0" />
+									</do_all>
+								</do_if>
+							</do_if>
+
+							<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Owner   : Final %s (Loop/Paranid %s/%s))'.[(player.age)i, $EncounterFactionList, $SectorLoopCount, $ParanidSector ]" output="true" append="true" />
+
+						</actions>
+					</library>
+
+					<!-- CLASS (TYPES) -->
+
+					<library name="EncounterSetClassType">
+						<!-- Determines crate contents -->
+						<actions>
+							<do_any>
+								<set_value name="$EncounterClassTag" exact="tag.trader" weight="40 + ( 30 * player.sector.security )" />
+								<set_value name="$EncounterClassTag" exact="tag.military" weight="10 + ( 10 * player.sector.security )" />
+								<set_value name="$EncounterClassTag" exact="tag.criminal" weight="if player.ship.sector.owner == faction.ownerless then 40 else 10" />
+							</do_any>
+							<set_value name="$EncounterClassTag" exact="tag.xenon" chance="if player.sector.owner == faction.xenon then 90 else 10" />
+						</actions>
+					</library>
+
+					<!-- DEBRIS Definitions -->
+
+					<library name="EncounterDebrisDefinitions">
+						<!-- Set Debris definitions -->
+						<actions>
+							<set_value name="$ParanidSector" exact="if [ faction.paranid, faction.holyorder, faction.alliance, faction.buccaneers, faction.trinity ].indexof.{player.sector.owner} == 0 then 5 else 15" />
+							<set_value name="$SplitSector" exact="if md.$SplitFactions.indexof.{player.sector.owner} == 0 then 5 else 15" />
+							<do_any>
+								<!-- DEBRIS - Small -->
+								<do_all weight="if $EncounterType == tag.asteroid then 58 else 43">
+									<set_value name="$EncounterSizeFactor" exact="0.10" />
+									<do_any>
+										<set_value name="$EncounterObjMacro" exact="[ macro.env_debris_debris_m_02_macro, macro.env_debris_debris_m_03_macro, macro.env_debris_debris_m_04_macro, macro.env_debris_debris_m_05_macro, macro.env_debris_debris_m_06_macro, macro.env_debris_debris_m_07_macro, macro.env_debris_debris_m_08_macro, macro.env_debris_debris_m_09_macro, macro.env_debris_debris_m_10_macro ].random" weight="80" />
+										<set_value name="$EncounterObjMacro" exact="[ macro.env_debris_debris_s_01_macro ].random" weight="15" />
+										<set_value name="$EncounterObjMacro" exact="[ macro.env_debris_split_s_01_macro, macro.env_debris_split_s_02_macro ].random" weight="$SplitSector" />
+									</do_any>
+									<include_actions ref="EncounterCreateName" />
+									<set_value name="$EncounterNameIndex" min="999" max="9999" />
+									<set_value name="$EncounterObjName" exact="'Debris ' + $EncounterNameIndex + $EncounterNameType3" />
+								</do_all>
+
+								<!-- DEBRIS - Medium -->
+								<do_all weight="if $EncounterType == tag.asteroid then 34 else 25">
+									<set_value name="$EncounterSizeFactor" exact="0.25" />
+									<do_any>
+										<set_value name="$EncounterObjMacro" exact="[ macro.env_debris_debris_xl_03_macro, macro.env_debris_debris_xl_04_macro, macro.env_debris_debris_xl_07_macro, macro.env_debris_debris_xl_08_macro ].random" weight="40" />
+										<set_value name="$EncounterObjMacro" exact="[ macro.env_debris_debris_m_01_macro ].random" weight="30" />
+										<do_all weight="20">
+											<set_value name="$EncounterClassTag" exact="tag.xenon" />
+											<set_value name="$EncounterObjMacro" exact="[ macro.env_debris_xenon_m_01_macro ].random" />
+										</do_all>
+										<set_value name="$EncounterObjMacro" exact="[ macro.env_debris_teladi_xl_02_macro, macro.env_debris_teladi_xl_03_macro ].random" weight="10" />
+									</do_any>
+									<include_actions ref="EncounterCreateName" />
+									<set_value name="$EncounterNameIndex" min="99" max="999" />
+									<set_value name="$EncounterObjName" exact="'Debris ' + $EncounterNameIndex + $EncounterNameType3" />
+								</do_all>
+
+								<!-- DEBRIS - Large -->
+								<do_all weight="if $EncounterType == tag.asteroid then 5 else 20">
+									<set_value name="$EncounterSizeFactor" exact="0.50" />
+									<do_any>
+										<set_value name="$EncounterObjMacro" exact="[ macro.env_debris_debris_xl_01_macro, macro.env_debris_debris_xl_02_macro, macro.env_debris_debris_xl_05_macro, macro.env_debris_debris_xl_06_macro ].random" weight="40" />
+										<do_all weight="20">
+											<set_value name="$EncounterClassTag" exact="tag.xenon" />
+											<set_value name="$EncounterObjMacro" exact="[ macro.env_debris_xenon_l_02_container_macro, macro.env_debris_xenon_l_02_macro, macro.env_debris_xenon_xl_03_macro ].random" />
+										</do_all>
+										<set_value name="$EncounterObjMacro" exact="[ macro.env_debris_station_l_03_macro ].random" weight="if $EncounterType == tag.crate then 0 else 10" />
+										<set_value name="$EncounterObjMacro" exact="[ macro.env_debris_paranid_l_01_macro, macro.env_debris_paranid_xl_04_macro ].random" weight="$ParanidSector" />
+										<set_value name="$EncounterObjMacro" exact="[ macro.env_debris_teladi_xl_01_macro, macro.env_debris_teladi_xl_04_macro ].random" weight="15" />
+									</do_any>
+									<include_actions ref="EncounterCreateName" />
+									<set_value name="$EncounterNameIndex" min="9" max="99" />
+									<set_value name="$EncounterObjName" exact="'Wreck ' + $EncounterNameType3 + $EncounterNameIndex" />
+								</do_all>
+
+								<!-- DEBRIS - Extra Large -->
+								<do_all weight="if $EncounterType == tag.asteroid then 2 else 10">
+									<set_value name="$EncounterSizeFactor" exact="1.0" />
+									<do_any>
+										<set_value name="$EncounterObjMacro" exact="[ macro.env_debris_station_l_01_macro, macro.env_debris_station_l_02_macro, macro.env_debris_station_l_04_macro, macro.env_debris_station_l_05_container_macro, macro.env_debris_station_l_05_macro, macro.env_debris_station_l_06_macro ].random" weight="if $EncounterType == tag.crate then 0 else 40" />
+										<set_value name="$EncounterObjMacro" exact="[ macro.env_debris_debris_l_01_macro, macro.env_debris_debris_l_02_container_macro, macro.env_debris_debris_l_02_macro ].random" weight="20" />
+										<do_all weight="10">
+											<set_value name="$EncounterClassTag" exact="tag.xenon" />
+											<set_value name="$EncounterObjMacro" exact="[ macro.env_debris_xenon_l_01_macro, macro.env_debris_xenon_l_03_macro, macro.env_debris_xenon_xl_01_macro, macro.env_debris_xenon_xl_02_macro, macro.env_debris_xenon_xl_03_container_macro, macro.env_debris_xenon_xl_04_macro, macro.env_debris_xenon_xl_05_macro, macro.env_debris_xenon_xl_06_macro, macro.env_debris_xenon_xl_07_macro ].random" />
+										</do_all>
+										<set_value name="$EncounterObjMacro" exact="[ macro.env_debris_split_xl_01_container_macro, macro.env_debris_split_xl_01_macro, macro.env_debris_split_xl_02_macro, macro.env_debris_split_xl_03_macro, macro.env_debris_split_xl_04_macro ].random" weight="$SplitSector" />
+										<set_value name="$EncounterObjMacro" exact="[ macro.env_debris_paranid_xl_01_macro, macro.env_debris_paranid_xl_02_macro, macro.env_debris_paranid_xl_03_macro ].random" weight="$ParanidSector" />
+									</do_any>
+									<include_actions ref="EncounterCreateName" />
+									<set_value name="$EncounterNameIndex" min="5" max="9" />
+									<set_value name="$EncounterObjName" exact="'Wreck ' + $EncounterNameType2 + $EncounterNameIndex" />
+								</do_all>
+
+								<!-- DEBRIS - XXL -->
+								<do_all weight="if $EncounterType == tag.crate then 0 else if $EncounterType == tag.asteroid then 1 else 2">
+									<set_value name="$EncounterSizeFactor" exact="1.5" />
+									<set_value name="$EncounterClassTag" exact="tag.xenon" />
+									<do_any>
+										<set_value name="$EncounterObjMacro" exact="[ macro.env_debris_xenon_xxl_01_macro, macro.env_debris_xenon_xxl_02_macro ].random" weight="80"/>
+										<set_value name="$EncounterObjMacro" exact="[ macro.landmarks_xenon_crash_site_01_macro].random" weight="if player.sector.owner != faction.xenon then 20 else 10" />
+										<do_all weight="if player.sector.owner == faction.xenon then  0 else 20">
+											<set_value name="$EncounterClassTag" exact="tag.trader" />
+											<do_any>
+												<set_value name="$EncounterObjMacro" exact="[ macro.landmarks_gen_old_ringstation_macro  ].random" weight="if [ faction.argon, faction.antigone, faction.hatikvah, faction.teladi     ].indexof.{player.sector.owner} == 0 then 0 else 100"/>
+												<set_value name="$EncounterObjMacro" exact="[ macro.landmarks_par_monument_expl_04_macro ].random" weight="if [ faction.paranid, faction.holyorder, faction.alliance, faction.trinity ].indexof.{player.sector.owner} == 0 then 0 else 100"/>
+											</do_any>
+										</do_all>
+									</do_any>
+									<include_actions ref="EncounterCreateName" />
+									<set_value name="$EncounterNameIndex" min="1" max="5" />
+									<set_value name="$EncounterObjName" exact="'Wreck ' + $EncounterNameType1 + $EncounterNameIndex" />
+								</do_all>
+							</do_any>
+						</actions>
+					</library>
+
+					<!-- Ship Housekeeping -->
+
+					<library name="ShipCleanup">
+						<actions>
+							<do_if value="not $LeadShip.isoperational">
+								<!-- <debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Clean : %s %s %s is no longer operational. Cleaning up instance.'.[(player.age)i, @$LeadShip.idcode, @$LeadShip.knownname, @$LeadShip]" output="true" append="true" /> -->
+								<set_value name="$cleanup"/>
+							</do_if>
+							<do_elseif value="$LeadShip.trueowner == faction.ownerless">
+								<!-- <debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Clean : %s %s %s is now ownerless. Cleaning up instance.'.[(player.age)i, @$LeadShip.idcode, @$LeadShip.knownname, @$LeadShip]" output="true" append="true" /> -->
+								<set_value name="$cleanup"/>
+							</do_elseif>
+							<do_elseif value="$LeadShip.trueowner == faction.player">
+								<!-- <debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Clean : %s %s %s currently belongs to the player. Cleaning up instance.'.[(player.age)i, @$LeadShip.idcode, @$LeadShip.knownname, @$LeadShip]" output="true" append="true" /> -->
+								<set_value name="$cleanup"/>
+							</do_elseif>
+							<do_else>
+								<!-- <debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Clean : %s %s %s is valid. Continuing to track.'.[(player.age)i, @$LeadShip.idcode, @$LeadShip.knownname, @$LeadShip]" output="true" append="true" /> -->
+							</do_else>
+
+							<do_if value="$cleanup?">
+								<do_if value="$LeadShip.isoperational">
+									<cancel_all_orders object="$LeadShip"/>
+								</do_if>
+								<cancel_cue cue="parent"/>
+							</do_if>
+						</actions>
+					</library>
+
+					<!-- Define Warp posiiton -->
+
+					<library name="EncounterSetWarpPosition">
+						<actions>
+							<set_value name="$X2" min="$X / 2" max="$X" />
+							<set_value name="$Y2" min="$Y / 2" max="$Y" />
+							<set_value name="$Z2" min="[ 37km, player.ship.maxradarrange * 1.2  ].max" max="[ 46km, player.ship.maxradarrange * 2 ].max" />
+							<!-- <debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 WarpLib : SetWarpPosition [ %s, %s, %s ] to [ %s, %s, %s ]'.[(player.age)i, ($X/10)i/100f, ($Y/10)i/100f, ($Z/10)i/100f, ($X2/10)i/100f, ($Y2/10)i/100f, ($Z2/10)i/100f ]" output="true" append="true" /> -->
+						</actions>
+					</library>
+
+					<!-- Set Pitch/Yaw/Roll -->
+
+					<library name="EncounterSetPitchYawRoll">
+						<actions>
+							<set_value name="$Pitch" min="0deg" max="359deg" />
+							<set_value name="$Yaw" min="0deg" max="359deg" />
+							<set_value name="$Roll" min="0deg" max="359deg" />
+						</actions>
+					</library>
+
+					<!-- LIBRARIES End -->
+
+					<!-- CONTAINERS/CRATES CUE -->
+					<cue name="EncounterCreateCrates" instantiate="true">
+						<conditions>
+							<event_cue_signalled/>
+						</conditions>
+						<!-- Wait for other stuff to be created so 'safepos' does not warp crates into the middle of proceeding objects -->
+						<delay exact="10ms"/>
+						<actions>
+
+							<set_value name="$CrateTotalValue" exact="0" />
+							<set_value name="$CombinedRank" exact="stat.fight_rank + stat.trade_rank" />
+							<set_value name="$CrateWareRank" exact="if $EncounterClassTag == tag.trader then [1,stat.trade_rank].max else [1,stat.fight_rank].max" />
+							<set_value name="$CrateWareChance" exact="( 100 * (sqrt( player.ship.distanceto.{player.sector}/1000 ) / ((player.sector.coresize/2000) /(2-player.sector.security))) )i" />
+							<set_value name="$WeightDebris" exact="Manager.$EncSalvageChance" />
+
+							<!-- Find existing crates -->
+							<find_object name="$CratesFound" class="[ class.collectableammo, class.collectablewares ]" space="player.ship.cluster" multiple="true">
+								<!--	<match_any_wares wares="[ware.silicon]" negate="true"/> -->
+								<match_distance object="player.ship" min="30 * player.ship.maxradarrange"/>
+							</find_object>
+
+							<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Crate   : Size %s (%s) Rank %s Ware %s%% Found (%s) Debris %s%% (%s/%s)'.[(player.age)i, $EncounterSizeFactor, $EncounterClassTag, $CrateWareRank, $CrateWareChance, $CratesFound.count, $WeightDebris, $EncounterType, $EncounterAnchor ]" output="true" append="true" />
+
+							<do_if value="$EncounterType == tag.crate or $EncounterAnchor == null">
+								<remove_value name="$EncounterAnchorExists" />
+								<!-- <set_value name="$EncounterCrateCount" exact="(0.625 - 0.54 * player.sector.security) * player.ship.distanceto.{player.sector} / (player.sector.coresize/2)" /> -->
+								<set_value name="$EncounterCrateFactor" exact="player.ship.distanceto.{player.sector} / (player.sector.coresize/2)" />
+								<set_value name="$EncounterCrateCount" min="(0.16 * $EncounterCrateFactor)i" max="([ 15, [1,(0.7 - 0.54 * player.sector.security) * $EncounterCrateFactor].max ].min)i" />
+
+								<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Crate   : Total Min/Max = %s/%s (%s)'.[(player.age)i, (0.16 * $EncounterCrateFactor)i, ([ 15, [1,(0.7 - 0.54 * player.sector.security) * $EncounterCrateFactor].max ].min)i, $EncounterType ]" output="true" append="true" />
+							</do_if>
+							<do_else>
+								<set_value name="$EncounterAnchorExists" exact="true" />
+								<set_value name="$EncounterAnchorSQRT" exact="sqrt($EncounterAnchor.size)/12" />
+								<set_value name="$EncounterCrateCount" min="( [ 1+(stat.trade_rank/5), $EncounterAnchorSQRT ].min )i" max="( [ 1+(stat.trade_rank/2), 1.5*$EncounterAnchorSQRT ].min )i" profile="decreasing" scale="2" />
+								<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Crate   : Anchor Min/Max = %s/%s (%s)'.[(player.age)i, [(1+(stat.trade_rank/5))i,($EncounterAnchorSQRT)i].min, [15,(1.5*$EncounterAnchorSQRT)i].min, $EncounterType ]" output="true" append="true" />
+							</do_else>
+
+							<do_all exact="$EncounterCrateCount" counter="$CrateN">
+
+								<set_value name="$CrateWareValue" exact="0" />
+								<set_value name="$EncounterObjMacro" exact="null" />
+								<set_value name="$EncounterSubObj" exact="null" />
+								<set_value name="$EncounterSubObjDistance" exact="0" />
+
+								<!-- Set Pitch/Roll/Yaw for each crate as these should be random and not aligned in anyway -->
+								<include_actions ref="EncounterSetPitchYawRoll"/>
+
+								<do_if value="$CratesFound.count gt 0" chance="2 * Manager.$EncWreckChance">
+									<set_value name="$EncounterSubObj" exact="$CratesFound.random" />
+									<do_if value="$EncounterAnchorExists?">
+										<warp object="$EncounterSubObj" sector="player.sector">
+											<safepos object="$EncounterAnchor" min="[10m,$EncounterAnchor.size/5m].max" max="[20m,[$EncounterAnchor.size/3m,1km].min].max" />
+											<rotation pitch="$Pitch" yaw="$Yaw" roll="$Roll" />
+										</warp>
+									</do_if>
+									<do_else>
+										<!-- <include_actions ref="EncounterSetWarpPosition"/> -->
+										<warp object="$EncounterSubObj" sector="player.sector">
+											<!-- <safepos value="$EncounterPosition" /> -->
+											<safepos value="$EncounterPosition" min="($CrateN-1) * 25m" radius="($CrateN * $CrateN) * 20m" profile="increasing" scale="2" />
+											<rotation pitch="$Pitch" yaw="$Yaw" roll="$Roll" />
+										</warp>
+									</do_else>
+
+									<set_value name="$CrateWareList" exact="$EncounterSubObj.wares.list" />
+
+									<do_if value="$CrateWareList.count == 0">
+										<set_value name="$CrateWare" exact="null" />
+										<set_value name="$CrateWareUnits" exact="0" />
+									</do_if>
+									<do_else>
+										<set_value name="$CrateWare" exact="$CrateWareList.{1}" />
+										<set_value name="$CrateWareUnits" exact="$EncounterSubObj.wares.{$CrateWareList.{1}}.count" />
+										<set_value name="$CrateWareValue" exact="$CrateWare.averageprice * $CrateWareUnits / 100" />
+									</do_else>
+
+									<remove_from_list name="$CratesFound" exact="$EncounterSubObj" />
+									<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Crate   : # %s Warp %s x %s (%s Cr) (%s)'.[(player.age)i, $CrateN, $CrateWareUnits, $CrateWare, $CrateWareValue, $EncounterType ]" output="true" append="true" />
+
+								</do_if>
+
+								<do_else>
+									<!--
+									Ware vs container				egrep "ware id|container ref" wares.xml|sed 's/"/ /g' | awk '{ if ($0 ~ "ware id") { ware=$3 } else { if ($0 ~ "container ref") { printf("%-40s %s\n",$3,ware)}}}' | sort -u |grep sm_gen_pickup_equipment_01_macro | awk '{print $NF}'  |sort -u | xargs
+									Price List						cat x | while read w ; do sed 's/"/ /g' wares.xml | nawk -v ware=$w '{if ($0 ~ "ware id= "ware) {print "ware."$3;getline;print $5} }';done | xargs -n2 | awk '{print $0;X+=$2} END {print NR,X/NR}'
+									-->
+									<set_value name="$CrateWareMax" exact="1" />
+									<set_value name="$CrateWareMix" exact="1" />
+
+									<do_any>
+										<do_all weight="40">											<!-- XS -->
+											<do_any>
+												<do_all weight="if $EncounterClassTag == tag.trader then 43 else 3">
+													<set_value name="$EncounterObjMacro" exact="macro.sm_gen_powerup_wares_01_macro" />
+													<!-- 3353 -->
+													<set_value name="$CrateWareList" exact="[ ware.inv_digitalseminar_morale, ware.inv_digitalseminar_engineering, ware.inv_digitalseminar_piloting, ware.inv_digitalseminar_boarding, ware.inv_digitalseminar_management, ware.inv_seminar_piloting_0, ware.inv_seminar_management_0, ware.inv_seminar_piloting_1, ware.inv_seminar_management_1, ware.inv_seminar_piloting_2, ware.inv_seminar_management_2, ware.inv_seminar_piloting_3, ware.inv_seminar_management_3, ware.inv_seminar_piloting_4, ware.inv_seminar_management_4]" />
+												</do_all>
+												<do_all weight="if $EncounterClassTag == tag.trader then 36 else 4">
+													<set_value name="$EncounterObjMacro" exact="macro.sm_gen_wares_common_01_macro" />
+													<!-- 4506 -->
+													<set_value name="$CrateWareList" exact="[ ware.inv_argnu_softtoy, [ware.inv_bandages, ware.inv_needle, ware.inv_sedative], [ware.inv_mixedfruit, ware.inv_argnusteak], ware.inv_argon_voting_ballot, ware.inv_salvagedelectronics, ware.inv_biometric_data, ware.inv_herbicide, ware.inv_contaminated_soil_sample, ware.inv_damaged_keycard, ware.inv_dna_sample, ware.inv_hydraulicpump, ware.inv_familyheirloom, ware.inv_micromotor, ware.inv_preciousring, ware.inv_modulartrigger, ware.inv_pricelessart, ware.inv_sealed_vacuum_tubes, ware.inv_microgimble, ware.inv_sensitivedatapacket, [ware.inv_spacefly_larvae, ware.inv_spaceflyeggs], ware.inv_rapidsandfilter, ware.inv_split_hunting_trophy, ware.inv_carbonfilter, ware.inv_unmarked_black_box, ware.inv_algaescrubber, ware.inv_vial_green_liquid, ware.inv_interfaceunit, ware.inv_encrypted_accesskey, [ware.inv_rarespices, ware.inv_spaceflyeggs], ware.inv_encrypted_contract, ware.inv_crystalbit, ware.inv_encrypted_espionagedocument, ware.inv_majaglit, ware.inv_encrypted_evidence, ware.inv_securecontainer, ware.inv_encrypted_malware, ware.inv_advancedtargetingmodule, ware.inv_encrypted_recording, ware.inv_encrypted_report, ware.inv_remotedetonator, ware.inv_encrypted_researchpaper, ware.inv_electronics, ware.inv_programmablefieldarray ]" />
+													<set_value name="$CrateWareMix" exact="3" />
+												</do_all>
+												<do_all weight="if $EncounterClassTag == tag.trader then 11 else 5">
+													<set_value name="$EncounterObjMacro" exact="macro.sm_gen_wares_rare_01_macro" />
+													<!-- 46860 -->
+													<set_value name="$CrateWareList" exact="[ ware.inv_antimatter_injection_sensor, ware.inv_artificial_paranid_eye, ware.inv_bionic_augmentation, ware.inv_bofu_burger, ware.inv_bone_fragments, ware.inv_charged_particle_regulator, ware.inv_confidential_dossier, ware.inv_counterfeit_luxury_goods, ware.inv_experimental_medicine, ware.inv_glass_figurine, ware.inv_hatikvah_dossier_dalbusta, ware.inv_nanite_fabricator, ware.inv_nividium_scalescraper, ware.inv_paranid_religious_tract, ware.inv_sandwell_archive_pass, ware.inv_ship_in_a_bottle, ware.inv_speech_manuscript, ware.inv_speech_pattern_analyzer, ware.inv_spherical_artifact, ware.inv_terracotta_teladi_egg, ware.inv_timewarp, ware.inv_wenendra_score, ware.inv_xenoterran_implant, ware.inv_magneticmaterial, ware.inv_agidevice_02, ware.inv_unstablecrystal, ware.inv_hallucinogenics, ware.inv_decryptionmodule, ware.inv_agidevice_03, ware.inv_firstaidkit, ware.inv_agidevice_01, ware.inv_finemeal, ware.inv_kyondevice_01, ware.inv_kyondevice_02, ware.inv_harddrug_01, ware.inv_kyondevice_03, ware.inv_damagedsingularityengine, ware.inv_fluxcapacitor, ware.inv_securitybypasssystem, ware.inv_securityslicer, ware.inv_securitydecryptionsystem, ware.inv_spaceflycaviar, ware.inv_head_of_split, ware.inv_split_ceremonial_dagger ]" />
+												</do_all>
+												<do_all weight="if $EncounterClassTag == tag.military then 5 else 3">
+													<set_value name="$EncounterObjMacro" exact="macro.sm_gen_wpsmod_common_01_macro" />
+													<!-- 5000 -->
+													<set_value name="$CrateWareList" exact="[ ware.modpart_tuningsoftware, ware.modpart_extendedfuelcontainer, ware.modpart_shipnanoweave_t1, ware.modpart_enginefuelinjector_t1, ware.modpart_shieldgeneratorcoil_t1, ware.modpart_weaponchamber_t1, ware.modpart_highenergycatalyst, ware.modpart_nividiumcrystallite, ware.modpart_nividiumoxide ]" />
+												</do_all>
+												<do_all weight="if $EncounterClassTag == tag.military then 4 else 2">
+													<set_value name="$EncounterObjMacro" exact="macro.sm_gen_wpsmod_unusual_01_macro" />
+													<!-- 10000-->
+													<set_value name="$CrateWareList" exact="[ ware.modpart_enginefuelinjector_t2, ware.modpart_shieldgeneratorcoil_t2, ware.modpart_shipnanoweave_t2, ware.modpart_weaponchamber_t2 ]" />
+												</do_all>
+												<do_all weight="if $EncounterClassTag == tag.military then 3 else 1">
+													<set_value name="$EncounterObjMacro" exact="macro.sm_gen_wpsmod_rare_01_macro" />
+													<!-- 20000 -->
+													<set_value name="$CrateWareList" exact="[ ware.modpart_enginefuelinjector_t3, ware.modpart_shieldgeneratorcoil_t3, ware.modpart_shipnanoweave_t3, ware.modpart_weaponchamber_t3 ]" />
+												</do_all>
+											</do_any>
+										</do_all>
+										<do_all weight="2500">											<!-- S -->
+											<do_any>
+												<do_all weight="15">
+													<set_value name="$EncounterObjMacro" exact="macro.props_sm_container_xs_generic_macro" />
+													<!-- 137 -->
+													<set_value name="$CrateWareList" exact="[ ware.medicalsupplies, ware.majadust ]" />
+													<set_value name="$CrateWareMax" exact="1413" />
+													<!-- 343/1413 -->
+												</do_all>
+												<do_all weight="if $EncounterClassTag == tag.criminal then 14 else if $EncounterClassTag == tag.trader then 3 else 0">
+													<set_value name="$EncounterObjMacro" exact="macro.props_sm_container_xs_rare_wares_macro" />
+													<!-- 150 -->
+													<set_value name="$CrateWareList" exact="[ ware.spacefuel, ware.spaceweed ]" />
+													<set_value name="$CrateWareMax" exact="2827" />
+													<!-- 729/2827 -->
+												</do_all>
+												<do_all weight="if $EncounterClassTag == tag.trader then 12 else 9">
+													<set_value name="$EncounterObjMacro" exact="macro.sm_gen_warecontainer_01_macro" />
+													<!-- 216 -->													<!-- Can this be picked up??? -->
+													<set_value name="$CrateWareList" exact="[ ware.refinedmetals, ware.teladianium, ware.siliconwafers ]" />
+													<set_value name="$CrateWareMax" exact="471" />
+													<!-- 512/471 -->
+												</do_all>
+												<do_all weight="if $EncounterClassTag == tag.trader then 11 else 31">
+													<set_value name="$EncounterObjMacro" exact="macro.sm_gen_warecontainer_01_macro" />
+													<!-- 33 -->													<!-- Can this be picked up ?? change to macro.props_sm_container_hidden_missiles_macro ?? -->
+													<set_value name="$CrateWareList" exact="[ ware.missilecomponents, ware.smartchips ]" />
+													<set_value name="$CrateWareMax" exact="4240" />
+													<!-- 512/4240 -->
+												</do_all>
+												<do_all weight="11">
+													<set_value name="$EncounterObjMacro" exact="macro.props_sm_container_xs_wares_macro" />
+													<!-- 268 -->
+													<set_value name="$CrateWareList" exact="[ ware.engineparts, ware.hullparts, ware.fieldcoils ]" />
+													<set_value name="$CrateWareMax" exact="565" />
+													<!-- 729/565 -->
+												</do_all>
+												<do_all weight="if $EncounterClassTag == tag.trader then 9 else 12">
+													<set_value name="$EncounterObjMacro" exact="macro.props_sm_container_pickup_standardammo_macro" />
+													<!-- 354 -->
+													<set_value name="$CrateWareList" exact="[ ware.antimatterconverters ]" />
+													<set_value name="$CrateWareMax" exact="471" />
+													<!-- 343/471 -->
+												</do_all>
+												<do_all weight="if $EncounterClassTag == tag.military then 14 else 4">
+													<set_value name="$EncounterObjMacro" exact="macro.props_sm_container_xs_ammo_macro" />
+													<!-- 2421 -->
+													<set_value name="$CrateWareList" exact="[ ware.countermeasure_flares_01 ]" />
+													<set_value name="$CrateWareMax" exact="2120" />
+													<!-- 2120 - 512 -->
+												</do_all>
+												<do_all weight="if $EncounterClassTag == tag.military then 15 else 3">
+													<set_value name="$EncounterObjMacro" exact="macro.props_sm_container_xs_wares_macro" />
+													<!-- 3286 -->													<!-- macro.props_sm_container_hidden_inventory_macro -->
+													<set_value name="$CrateWareList" exact="[ ware.engine_gen_spacesuit_01_mk1, ware.weapon_gen_spacesuit_repairlaser_01_mk1, ware.weapon_gen_spacesuit_laser_01_mk1, ware.engine_gen_spacesuit_01_mk2, ware.weapon_gen_spacesuit_demolition_01_mk1, ware.software_hackerspacesuitmk1, ware.software_oxygenspacesuitmk1 ]" />
+												</do_all>
+												<do_all weight="2">
+													<do_any>
+														<set_value name="$EncounterObjMacro" exact="macro.props_sm_container_xs_wares_macro" weight="if $EncounterClassTag == tag.criminal then 10 else 70" />
+														<set_value name="$EncounterObjMacro" exact="macro.props_sm_container_hidden_money_macro" weight="if $EncounterClassTag == tag.criminal then 70 else 20" />
+														<!-- 34200 -->
+														<set_value name="$EncounterObjMacro" exact="macro.props_sm_container_hidden_missiles_macro" weight="if $EncounterClassTag == tag.trader   then 10 else 20" />
+														<!-- 33 -->
+													</do_any>
+													<set_value name="$CrateWareList" exact="[ ware.inv_crystal_01, ware.inv_crystal_02, ware.inv_crystal_03, ware.inv_crystal_04, ware.inv_crystal_05 ]" />
+													<set_value name="$CrateWareMax" exact="5" />
+													<set_value name="$CrateWareMix" exact="2" />
+												</do_all>
+											</do_any>
+										</do_all>
+										<do_all weight="if $EncounterSizeFactor lt 0.25 then 0 else 15">											<!-- M -->
+											<do_any>
+												<do_all weight="if $EncounterClassTag == tag.trader then 40 else 8">
+													<set_value name="$EncounterObjMacro" exact="macro.props_sm_container_s_energy_macro" />
+													<!-- 16 -->
+													<set_value name="$CrateWareList" exact="[ ware.energycells ]" />
+													<set_value name="$CrateWareMax" exact="4240" />
+													<!-- 6859/4240 -->
+												</do_all>
+												<do_all weight="if $EncounterClassTag == tag.trader then 23 else 11">
+													<set_value name="$EncounterObjMacro" exact="macro.props_sm_container_s_food_macro" />
+													<!-- 49 -->
+													<set_value name="$CrateWareList" exact="[ ware.spices, ware.foodrations, ware.wheat, ware.sojahusk, ware.meat, ware.majasnails, ware.sojabeans, ware.sunriseflowers, ware.swampplant ]" />
+													<set_value name="$CrateWareMax" exact="1413" />
+													<!-- 6859/1413 -->
+												</do_all>
+												<do_all weight="18">
+													<set_value name="$EncounterObjMacro" exact="macro.props_sm_container_s_liquid_macro" />
+													<!-- 79 -->
+													<set_value name="$CrateWareList" exact="[ ware.nostropoil, ware.water, ware.superfluidcoolant ]" />
+													<set_value name="$CrateWareMax" exact="530" />
+													<!-- 6859/530 -->
+												</do_all>
+												<do_all weight="if $EncounterClassTag == tag.trader then 11 else 23">
+													<set_value name="$EncounterObjMacro" exact="macro.props_sm_container_s_generic_macro" />
+													<!-- 202 -->
+													<set_value name="$CrateWareList" exact="[ ware.antimattercells ]" />
+													<set_value name="$CrateWareMax" exact="471" />
+													<!-- 6859/5832 -->
+												</do_all>
+												<do_all weight="if $EncounterClassTag == tag.trader then 8 else 40">
+													<set_value name="$EncounterObjMacro" exact="macro.props_sm_container_xs_generic02_macro" />
+													<!-- 450 -->
+													<set_value name="$CrateWareList" exact="[ ware.shieldcomponents, ware.turretcomponents, ware.weaponcomponents ]" />
+													<set_value name="$CrateWareMax" exact="424" />
+													<!-- 2197/424 -->
+												</do_all>
+											</do_any>
+										</do_all>
+										<do_all weight="if $EncounterSizeFactor lt 0.50 then 0 else 10">											<!-- L -->
+											<do_any>
+												<do_all weight="if $EncounterClassTag == tag.trader then 53 else 7">
+													<set_value name="$EncounterObjMacro" exact="macro.sm_gen_pickup_solid_01_macro" />
+													<!-- 180 -->
+													<set_value name="$CrateWareList" exact="[ ware.ice, ware.ore, ware.silicon, ware.nividium ]" />
+													<set_value name="$CrateWareMax" exact="4547" />
+													<!-- 6859/2898 -->
+												</do_all>
+												<do_all weight="if $EncounterClassTag == tag.trader then 28 else 13">
+													<set_value name="$EncounterObjMacro" exact="macro.sm_gen_pickup_liquid_01_macro" />
+													<!-- 50 -->
+													<set_value name="$CrateWareList" exact="[ ware.helium, ware.methane, ware.hydrogen ]" />
+													<set_value name="$CrateWareMax" exact="2898" />
+													<!-- 6859/4547 -->
+												</do_all>
+												<do_all weight="if $EncounterClassTag == tag.trader then 13 else 28">
+													<set_value name="$EncounterObjMacro" exact="macro.sm_gen_pickup_container_01_macro" />
+													<!-- 867 -->
+													<set_value name="$CrateWareList" exact="[ ware.graphene, ware.quantumtubes, ware.advancedcomposites, ware.dronecomponents, ware.scanningarrays, ware.plasmaconductors, ware.advancedelectronics, ware.microchips, ware.claytronics ]" />
+													<set_value name="$CrateWareMax" exact="918" />
+													<!-- 5832/918 -->
+												</do_all>
+												<do_all weight="if $EncounterClassTag == tag.trader then 7 else 53">
+													<set_value name="$EncounterObjMacro" exact="macro.sm_gen_pickup_equipment_01_macro" />
+													<!-- 2733 -->
+													<set_value name="$CrateWareList" exact="[ ware.missile_dumbfire_light_mk1, ware.missile_dumbfire_heavy_mk1, ware.missile_dumbfire_light_mk2, ware.missile_cluster_light_mk1, ware.missile_guided_light_mk1, ware.missile_emp_mk1, ware.missile_heatseeker_light_mk1, ware.missile_swarm_light_mk1, ware.missile_smart_light_mk1, ware.missile_dumbfire_heavy_mk2, ware.missile_cluster_heavy_mk1, ware.missile_heatseeker_heavy_mk1, ware.missile_guided_heavy_mk1, ware.missile_swarm_heavy_mk1, ware.missile_smart_heavy_mk1, ware.missile_torpedo_light_mk1, ware.missile_torpedo_heavy_mk1 ]" />
+													<set_value name="$CrateWareMax" exact="10" />
+													<!-- 10 -->
+												</do_all>
+											</do_any>
+										</do_all>
+										<do_all weight="if $EncounterSizeFactor lt 1.0 or $EncounterClassTag == tag.trader then 0 else 6">											<!-- XL -->
+											<set_value name="$EncounterObjMacro" exact="macro.props_sm_container_pickup_unique_argon_minea_macro" />
+											<set_value name="$CrateWareList" exact="[ ware.ice, ware.ore, ware.silicon, ware.nividium ]" />
+											<set_value name="$CrateWareMax" exact="4674" />
+											<!-- 2312/39304 -->
+										</do_all>
+										<do_all weight="if $CrateN % 2 == 0 then $WeightDebris else 0">											<!-- Avoids crates being replaced by debris too often -->
+											<include_actions ref="EncounterDebrisDefinitions" />
+										</do_all>
+										<do_all weight="2">											<!-- Rare -->
+											<set_value name="$EncounterObjMacro" exact="[ macro.props_sm_container_xs_shieldrestore_macro, macro.sm_gen_shieldrestore_01_macro ].random" />
+										</do_all>
+									</do_any>
+
+									<!-- Set Pitch/Roll/Yaw for each crate as these should be random and not aligned in anyway -->
+									<include_actions ref="EncounterSetPitchYawRoll"/>
+
+									<!-- Create CRATE -->
+									<do_if value="$EncounterAnchorExists?">
+										<create_object name="$EncounterSubObj" macro="$EncounterObjMacro" sector="player.sector" spinning="true">
+											<safepos object="$EncounterAnchor" min="[10m,$EncounterAnchor.size/5m].max" max="[20m,[$EncounterAnchor.size/3m,1km].min].max" />
+											<rotation pitch="$Pitch" yaw="$Yaw" roll="$Roll" />
+										</create_object>
+										<set_value name="$EncounterSubObjDistance" exact="($EncounterAnchor.distanceto.{$EncounterSubObj})i" />
+									</do_if>
+									<do_else>
+										<!-- <include_actions ref="EncounterSetWarpPosition"/> -->
+										<create_object name="$EncounterSubObj" macro="$EncounterObjMacro" sector="player.sector" spinning="true">
+											<safepos value="$EncounterPosition" min="[10m,($CrateN-1) * 25m].max" radius="[20m,($CrateN * $CrateN) * 20m].max" />
+											<rotation pitch="$Pitch" yaw="$Yaw" roll="$Roll" />
+										</create_object>
+										<set_value name="$EncounterSubObjDistance" exact="$CrateN * $CrateN * 20m" />
+									</do_else>
+
+									<do_if value="$CrateN == 1">
+										<set_value name="$EncounterAnchor" exact="$EncounterSubObj" />
+									</do_if>
+
+									<do_if value="$EncounterSubObj.isclass.[class.collectablewares]">
+										<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Crate   : # %s Create %s (%s) %sm @ %sm (%s)'.[(player.age)i, $CrateN, $EncounterObjMacro, $EncounterObjMacro.class, ($EncounterSubObj.size)i, $EncounterSubObjDistance, $EncounterType ]" output="true" append="true" />
+										<!-- Add cargo to CRATE if possible -->
+										<do_if value="[ macro.props_sm_container_xs_shieldrestore_macro, macro.sm_gen_shieldrestore_01_macro ].indexof.{$EncounterObjMacro} != 0 ">
+											<set_object_name object="$EncounterSubObj" name="'Shield Catalyst Module'" />
+										</do_if>
+										<do_elseif value="$EncounterObjMacro == macro.props_sm_container_hidden_missiles_macro">
+											<!-- Special munitions ? -->
+										</do_elseif>
+										<do_else>
+											<!-- <set_value name="$CrateWareMax2" exact="$CrateWareMax" /> -->
+											<set_value name="$CrateWareMax" exact="if $CrateWareMix == 1 then $CrateWareMax else [ $CrateWareMix, $CrateWareMax ].max" />
+											<!-- <debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Crate   : # %s MaxUnits %s -> %s Index (%s/%s)'.[(player.age)i, $CrateN, $CrateWareMax2, $CrateWareMax, $CrateWareList.count * $CrateWareRank / 20, $CrateWareList.count ]" output="true" append="true" /> -->
+											<do_if value="true" chance="$CrateWareChance">
+												<set_value name="$CrateWareMix" min="1" max="$CrateWareMix" />
+												<do_all exact="$CrateWareMix" counter="$Ware">
+													<set_value name="$CrateWareIndex" min="1" max="[1, [ $CrateWareList.count, $CrateWareList.count * $CrateWareRank / 20 ].min ].max" profile="decreasing" scale="2" />
+													<set_value name="$CrateWares" exact="$CrateWareList.{$CrateWareIndex}" />
+													<set_value name="$CrateWare" exact="if typeof $CrateWares == datatype.list then $CrateWares.random else $CrateWares" />
+													<set_value name="$CrateWareUnitsMax" min="1" max="[1, [ ($CrateWareMax * $CrateWareRank / 30)i, $CrateWareMax ].min ].max" profile="decreasing" scale="2"/>
+													<set_value name="$CrateWareUnits" exact="[1, ($CrateWareUnitsMax/$CrateWare.volume) * $CrateWareChance / 75 ].max" />
+													<set_value name="$ThisCrateValue" exact="$CrateWareUnits * $CrateWare.averageprice / 100" />
+													<set_value name="$CrateWareValue" exact="$CrateWareValue + $ThisCrateValue" />
+													<add_cargo object="$EncounterSubObj" ware="$CrateWare" exact="$CrateWareUnits" />
+													<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Crate   : # %s %s/%s x %s (#%s/%s (%s) %s Cr)'.[(player.age)i, $CrateN, $CrateWareUnits, $CrateWareUnitsMax, $CrateWare, $CrateWareIndex, [1, [ $CrateWareList.count, $CrateWareList.count * $CrateWareRank / 20 ].min ].max, $CrateWareList.count, $ThisCrateValue ]" output="true" append="true" />
+												</do_all>
+											</do_if>
+										</do_else>
+									</do_if>
+
+									<do_else>
+										<do_if value="$EncounterObjMacro == macro.props_sm_container_hidden_money_macro">
+											<set_value name="$MoneyDropID" min="[ 0, $CombinedRank * 0.8 ].max" max="[ 60, $CombinedRank * 1.1 ].min" profile="decreasing" scale="3" />
+											<set_drop_object object="$EncounterSubObj" drop="'encounters_drop_money_'+($MoneyDropID)i" />
+											<!-- <spawn_drop object="$EncounterSubObj" drop="'encounters_drop_money_'+($MoneyDropID)i" /> -->
+											<!-- <destroy_object object="$EncounterSubObj" explosion="false" /> -->
+											<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Crate   : # %s Hidden Drop Crate (#%s %s/%s) (%s)'.[(player.age)i, $CrateN, ($MoneyDropID)i, (1000+1000*(($MoneyDropID)i*0.5)^2)i, (1000+1000*(($MoneyDropID)i*1.0)^2)i, $EncounterType ]" output="true" append="true" />
+										</do_if>
+										<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Crate   : # %s Create %s %sm (%s) (%s)'.[(player.age)i, $CrateN, $EncounterObjMacro, ($EncounterSubObj.size)i, $EncounterObjMacro.class, $EncounterType ]" output="true" append="true" />
+										<set_value name="$EncounterAnchor" exact="$EncounterSubObj" />
+									</do_else>
+
+								</do_else>
+
+								<set_value name="$CrateTotalValue" exact="if $CrateWareValue gt 0 then ( $CrateTotalValue + $CrateWareValue ) else ( $CrateTotalValue + $EncounterCrateCount * ($EncounterSubObj.size)i )" />
+
+							</do_all>
+
+							<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Crate   : Mass %s Mine %s/%s%% (%s)'.[(player.age)i, ($CrateTotalValue)i, [ $EncounterCrateCount, sqrt( 2 * $CrateTotalValue/6000 )].max, 1.3 * (1-(player.sector.security/1.3)) * (($CrateTotalValue)i/1000), $EncounterType ]" output="true" append="true" />
+
+							<signal_cue_instantly cue="EncounterCreateMineField" param="[ $EncounterCrateCount, sqrt( 2 * $CrateTotalValue/6000 )].max" chance="1.3 * (1-(player.sector.security/1.3)) * (($CrateTotalValue)i/1000)" />
+
+						</actions>
+					</cue>
+
+					<!-- LOCKBOX CUE -->
+					<cue name="EncounterCreateLockBox" instantiate="true">
+						<conditions>
+							<event_cue_signalled/>
+						</conditions>
+						<!-- Wait for other stuff to be created so 'safepos' does not warp lockboxes into the middle of proceeding objects -->
+						<delay exact="5ms"/>
+						<actions>
+
+							<!-- Find existing Lockboxes -->
+							<find_object name="Manager.$LockBoxesFound" class="[ class.lockbox ]" space="player.ship.cluster" multiple="true">
+								<match_distance object="player.ship" min="4 * player.ship.maxradarrange"/>
+							</find_object>
+
+							<do_if value="$EncounterType == tag.lockbox or $EncounterAnchor == null">
+								<remove_value name="$EncounterAnchorExists" />
+								<!-- <set_value name="$EncounterLockBoxCount" exact="(0.3 - 0.3 * player.sector.security) * player.ship.distanceto.{player.sector} / (player.sector.coresize/2)" /> -->
+								<set_value name="$EncounterLockBoxCount" min="[1,(stat.trade_rank/10)i].min" max="1+(stat.trade_rank/10)i" />
+								<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 LockBox : Min/Max = %s/%s Found (%s)'.[(player.age)i, [1,(stat.trade_rank/10)i].min, 1+(stat.trade_rank/10)i, Manager.$LockBoxesFound.count ]" output="true" append="true" />
+							</do_if>
+							<do_else>
+								<set_value name="$EncounterAnchorExists" exact="true" />
+								<set_value name="$EncounterAnchorSQRT" exact="sqrt($EncounterAnchor.size)" />
+								<do_if value="$EncounterType == tag.rare">
+									<set_value name="$EncounterAnchorSQRT" exact="1.05 * $EncounterAnchorSQRT" />
+									<!-- Enables Lab Stations to have a possible LockBox -->
+								</do_if>
+								<set_value name="$EncounterLockBoxCount" min="[(1+(stat.trade_rank/10))i,($EncounterAnchorSQRT/50)i].min" max="[3,($EncounterAnchorSQRT/25)i].min" />
+								<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 LockBox : Min/Max = %s/%s'.[(player.age)i, [(1+(stat.trade_rank/10))i,($EncounterAnchorSQRT/50)i].min, [3,($EncounterAnchorSQRT/25)i].min]" output="true" append="true" />
+							</do_else>
+
+							<do_all exact="$EncounterLockBoxCount" counter="$LockBoxN">
+
+								<set_value name="$EncounterObjMacro" exact="null" />
+								<set_value name="$EncounterLockBox" exact="null" />
+								<set_value name="$EncounterLockBoxDistance" exact="0" />
+
+								<!-- Set Pitch/Roll/Yaw for each lockbox as these should be random and not aligned in anyway -->
+								<include_actions ref="EncounterSetPitchYawRoll"/>
+
+								<do_if value="Manager.$LockBoxesFound.count gt 0" chance="2 * Manager.$EncWreckChance">
+									<set_value name="$EncounterLockBox" exact="Manager.$LockBoxesFound.random" />
+									<do_if value="$EncounterAnchorExists?">
+										<warp object="$EncounterLockBox" sector="player.sector">
+											<safepos object="$EncounterAnchor" min="$EncounterAnchor.size/6m" max="[$EncounterAnchor.size/3m,1km].min" />
+											<rotation pitch="$Pitch" yaw="$Yaw" roll="$Roll" />
+										</warp>
+										<set_value name="$EncounterLockBoxDistance" exact="($EncounterAnchor.distanceto.{$EncounterLockBox})i" />
+									</do_if>
+									<do_else>
+										<include_actions ref="EncounterSetWarpPosition"/>
+										<warp object="$EncounterLockBox" sector="player.sector">
+											<safepos object="player.ship" x="$X2" y="$Y2" z="$Z2"/>
+											<rotation pitch="$Pitch" yaw="$Yaw" roll="$Roll" />
+										</warp>
+									</do_else>
+									<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 LockBox : # %s Warp LockBox %sm [%s,%s,%s]'.[(player.age)i, $LockBoxN, $EncounterLockBoxDistance, ($X/10)i/100f, ($Y/10)i/100f, ($Z/10)i/100f ]" output="true" append="true" />
+								</do_if>
+
+								<do_else>
+									<do_any>
+										<do_all weight="50">
+											<set_value name="$EncounterObjMacro" exact="[ macro.sm_gen_lockbox_big_01_macro ].random" />
+										</do_all>
+										<do_all weight="30">
+											<set_value name="$EncounterObjMacro" exact="[ macro.sm_gen_lockbox_big_02_macro, macro.sm_gen_lockbox_common_01_macro, macro.sm_gen_lockbox_explosive_01_macro, macro.sm_gen_lockbox_fragile_01_macro, macro.sm_gen_lockbox_rare_01_macro].random" />
+										</do_all>
+										<do_all weight="20">
+											<set_value name="$EncounterObjMacro" exact="[ macro.sm_gen_lockbox_special_01_macro, macro.sm_gen_lockbox_unusual_01_macro ].random" />
+										</do_all>
+									</do_any>
+
+									<do_if value="$EncounterAnchorExists?">
+										<create_object name="$EncounterLockBox" macro="$EncounterObjMacro" sector="player.sector" spinning="true">
+											<safepos object="$EncounterAnchor" min="$EncounterAnchor.size/6m" max="[$EncounterAnchor.size/3m,1km].min" />
+											<rotation pitch="$Pitch" yaw="$Yaw" roll="$Roll" />
+										</create_object>
+										<set_value name="$EncounterLockBoxDistance" exact="($EncounterAnchor.distanceto.{$EncounterLockBox})i" />
+									</do_if>
+									<do_else>
+										<create_object name="$EncounterLockBox" macro="$EncounterObjMacro" sector="player.sector" spinning="true">
+											<safepos object="player.ship" x="$X2" y="$Y2" z="$Z2"/>
+											<rotation pitch="$Pitch" yaw="$Yaw" roll="$Roll" />
+										</create_object>
+									</do_else>
+
+									<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 LockBox : # %s Create (%s/%s) Size %sm @ %sm [%s,%s,%s]'.[(player.age)i, $LockBoxN, $EncounterObjMacro, $EncounterObjMacro.class, ($EncounterLockBox.size)i, $EncounterLockBoxDistance, ($X/10)i/100f, ($Y/10)i/100f, ($Z/10)i/100f ]" output="true" append="true" />
+
+								</do_else>
+							</do_all>
+						</actions>
+					</cue>
+
+					<!-- MINES & LASER TOWER CUE -->
+					<cue name="EncounterCreateMineField" instantiate="true">
+						<conditions>
+							<event_cue_signalled/>
+						</conditions>
+						<!-- Wait for other stuff to be created so 'safepos' does not warp mines or lasertowers into the middle of proceeding objects -->
+						<delay exact="20ms"/>
+						<actions>
+
+							<set_value name="$AttackPlayer" exact="false" />
+							<set_value name="$FightFactor" exact="stat.fight_rank * player.sector.security" />
+							<set_value name="$MinRange" exact="[ 250, (  20 * $FightFactor )i ].max" />
+							<set_value name="$MaxRange" exact="[ 400, (  80 * $FightFactor )i ].max" />
+							<set_value name="$HullQuality" exact="70 * player.sector.coresize / player.ship.distanceto.{player.sector}" />
+							<set_value name="$SpawnFactor" exact="if $EncounterType == tag.salvage then (1 + $SalvageLoadout + ($SalvageHealth/100)) else 1" />
+							<!-- Increase Mine count for higher value salvage -->
+							<set_value name="$AttackFactor" exact="stat.fight_rank * ( 0.5 + [ [ tag.miner, tag.trader, tag.criminal, tag.military, tag.xenon ].indexof.{$EncounterClassTag},1].max / 3 )" />
+
+							<!-- The faction for all mines must be the same as each other should be the same as any object they are tethered to -->
+							<do_if value="not $EncounterFaction? or $EncounterFaction == faction.ownerless">
+								<set_value name="$EncounterFaction" exact="$EncounterFactionList.random" />
+							</do_if>
+
+							<do_if value="$EncounterFaction != faction.khaak">
+								<do_if value="$EncounterAnchor == null or [ tag.defencegrid, tag.minefield ].indexof.{$EncounterType} != 0">
+									<remove_value name="$EncounterAnchorExists" />
+									<set_value name="$MinSpawn" exact="[   0, ( 0.9 * $FightFactor )i ].max" />
+									<set_value name="$MaxSpawn" exact="[   1, ( 1.8 * $FightFactor )i ].max" />
+									<set_value name="$MinRange" exact="[ 250, (  20 * $FightFactor )i ].max" />
+									<set_value name="$MaxRange" exact="[ 400, (  80 * $FightFactor )i ].max" />
+								</do_if>
+								<do_else>
+									<set_value name="$EncounterAnchorExists" exact="true" />
+									<set_value name="$MinRange" exact="[$EncounterAnchor.size/2m,150m].max" />
+									<set_value name="$MaxRange" exact="[$EncounterAnchor.size/2m,1km ].max" />
+									<set_value name="$EncounterAnchorSQRT" exact="if $EncounterType == tag.salvage then 3 * sqrt($EncounterAnchor.size) else sqrt($EncounterAnchor.size)" />
+									<do_if value="$EncounterType == tag.rare">
+										<set_value name="$MinSpawn" exact="($EncounterAnchorSQRT/10)i" />
+										<set_value name="$MaxSpawn" exact="($EncounterAnchorSQRT/5)i" />
+									</do_if>
+									<do_else>										<!-- Asteroids, Debris, Salvage & all other stuff-->
+										<set_value name="$MinRange" exact="if $EncounterType == tag.salvage then [$EncounterAnchor.size,50m].max else [$EncounterAnchor.size/2m,150m].max" />
+										<set_value name="$MinSpawn" exact="($EncounterAnchorSQRT/8)i" />
+										<set_value name="$MinSpawn" exact="[ $MinSpawn, $SpawnFactor * $MinSpawn ].max" />
+										<set_value name="$MaxSpawn" exact="2 * $MinSpawn" />
+									</do_else>
+								</do_else>
+
+								<!-- Minefields in clusters of asteroids are spread out according to the size of asteroids present -->
+								<do_if value="event.param != null">
+									<do_if value="$EncounterType == tag.asteroid">
+										<set_value name="$MinRange" exact="[ event.param/4m,150m ].max" />
+										<set_value name="$MaxRange" exact="[ event.param/2m, 1km ].max" />
+										<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Grid    : Change of Min/Max safe radius to %sm/%sm (%sm) (%s)'.[ (player.age)i, ($MinRange)i, ($MaxRange)i, (event.param)i, $EncounterType ]" output="true" append="true" />
+									</do_if>
+									<do_elseif value="$EncounterType == tag.crate">
+										<set_value name="$MinSpawn" exact="(event.param / 3)i" />
+										<set_value name="$MaxSpawn" exact="(event.param + 2)i" />
+									</do_elseif>
+								</do_if>
+
+								<do_if value="$EncounterType == tag.defencegrid">
+									<!-- Defence Grids nearest the sector centre are always owned by the sector owner, further out or anchored  to objects they can be more random -->
+									<set_value name="$MineFieldType" exact="tag.defencegrid" />
+									<set_value name="$EncounterFaction" exact="player.sector.owner" />
+
+									<!-- Defence grids not related to an object get a mulitplier -->
+									<set_value name="$MinSpawn" exact="[ 10, 2 * $MinSpawn ].max" />
+									<set_value name="$MaxSpawn" exact="[ 20, 4 * $MaxSpawn ].max" />
+
+									<set_value name="$WeightMine01" exact="(  5 + stat.fight_rank / 4 )i" />
+									<set_value name="$WeightMine02" exact="( 10 + stat.fight_rank / 3 )i" />
+									<set_value name="$WeightMine03" exact="( 68 - stat.fight_rank / 1 )i" />
+									<set_value name="$WeightLaserXS" exact="( 10 + stat.fight_rank / 4 )i" />
+									<set_value name="$WeightLaserS" exact="(  5 + stat.fight_rank / 6 )i" />
+									<set_value name="$WeightDebris" exact="2" />
+									<set_value name="$EncounterSubObjRadius" min="5 * $MinRange" max="10 * $MaxRange" />
+									<set_value name="$AttackChance" exact="$AttackFactor + (75 * player.sector.security)" />
+
+								</do_if>
+
+								<do_else>									<!-- MinesFar and anchored to an object -->
+									<set_value name="$MineFieldType" exact="'MineField'" />
+									<set_value name="$WeightMine01" exact="if $EncounterType == tag.crate then ( 33 - stat.fight_rank / 3 )i else ( 63 - stat.fight_rank / 1 )i" />
+									<set_value name="$WeightMine02" exact="if $EncounterType == tag.crate then ( 45 + stat.fight_rank / 1 )i else ( 15 + stat.fight_rank / 3 )i" />
+									<set_value name="$WeightMine03" exact="(  7 + stat.fight_rank / 4 )i" />
+									<set_value name="$WeightLaserXS" exact="(  8 + stat.fight_rank / 5 )i" />
+									<set_value name="$WeightLaserS" exact="(  4 + stat.fight_rank / 5 )i" />
+									<set_value name="$WeightDebris" exact="3" />
+									<set_value name="$EncounterSubObjRadius" min="$MinRange" max="$MaxRange" />
+									<set_value name="$AttackChance" exact="if $EncounterType == tag.salvage then ($AttackFactor + (125 * player.sector.security)) else ($AttackFactor + (100 * player.sector.security))" />
+								</do_else>
+
+								<!-- Modify base defence grid object probabilities with reference to "factionlogic" content -->
+								<!-- Defensive & Hightech Civs use FF Mines only - higher chance of using laser towers -->
+								<do_if value="$EncounterType != tag.crate and ([ faction.argon, faction.antigone, faction.holyorder, faction.ministry, faction.paranid, faction.teladi, faction.trinity, faction.xenon ].indexof.{$EncounterFaction} != 0 or ($EncounterType == tag.defencegrid and $EncounterFaction == faction.holyorder))">
+									<set_value name="$WeightMine03" exact="$WeightMine01+$WeightMine02+$WeightMine03" />
+									<set_value name="$WeightMine01" exact="0" />
+									<set_value name="$WeightMine02" exact="0" />
+									<do_if value="[ faction.argon, faction.antigone, faction.paranid, faction.trinity  ].indexof.{$EncounterFaction} != 0">
+										<set_value name="$WeightLaserXS" exact="if $EncounterFaction == faction.antigone then 2 * $WeightLaserXS else 3 * $WeightLaserXS" />
+										<set_value name="$WeightLaserS" exact="if $EncounterFaction == faction.antigone then 2 * $WeightLaserS  else 3 * $WeightLaserS" />
+									</do_if>
+								</do_if>
+								<!-- Undefined / Piraty Civs cannot afford FF-Mines and almost no no lasertowers -->
+								<do_else>
+									<set_value name="$WeightMine01" exact="($WeightMine01+0.80*$WeightMine03)i" />
+									<set_value name="$WeightMine02" exact="($WeightMine02+0.20*$WeightMine03)i" />
+									<set_value name="$WeightMine03" exact="0" />
+									<set_value name="$WeightLaserXS" exact="if [ faction.buccaneers, faction.holyorder ].indexof.{$EncounterFaction} != 0 then ($WeightLaserXS/2)i else ($WeightLaserXS/4)i" />
+									<set_value name="$WeightLaserS" exact="if [ faction.buccaneers, faction.holyorder ].indexof.{$EncounterFaction} != 0 then ($WeightLaserS/3)i  else ($WeightLaserS/5)i" />
+								</do_else>
+
+								<!-- With greater distances into deepspace, reduce the attack chance  -->
+								<set_value name="$AttackChance" exact="($AttackChance - ( player.ship.distanceto.{player.sector} / player.sector.coresize ))i" />
+
+								<!-- Setup factions that deepspace friend/foe mines will engage -->
+								<get_factions_by_relation result="$EncounterSubObjKillList" relation="killmilitary" faction="player.sector.owner" />
+
+								<do_if value="true" chance="$AttackChance">
+									<set_value name="$AttackPlayer" exact="true" />
+									<append_to_list name="$EncounterSubObjKillList" exact="faction.player" />
+								</do_if>
+
+								<set_value name="$EncounterSubObjCount" min="$MinSpawn" max="$MaxSpawn" />
+
+								<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Grid    : %s (%s) %s x @ %sm (Mine Min/Max/SF = %s/%s/%s Range Min/Max = %sm/%sm) (%s)'.[(player.age)i, $MineFieldType, $EncounterFaction, ($EncounterSubObjCount)i, ($EncounterSubObjRadius)i, $MinSpawn, $MaxSpawn, $SpawnFactor, ($MinRange)i, ($MaxRange)i, $EncounterType ]" output="true" append="true" />
+								<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Grid    : Attack = %s%% Kill = %s (%s)'.[(player.age)i, $AttackChance, $EncounterSubObjKillList, $EncounterType ]" output="true" append="true" />
+
+								<!-- Set Pitch/Roll/Yaw once as minefields should usally be aligned -->
+								<include_actions ref="EncounterSetPitchYawRoll"/>
+
+								<do_all exact="$EncounterSubObjCount" counter="$Count">
+
+									<set_value name="$EncounterObjMacro" exact="null" />
+
+									<do_any>
+										<set_value name="$EncounterObjMacro" exact="[ macro.weapon_gen_mine_01_macro          ].random" weight="$WeightMine01" />
+										<set_value name="$EncounterObjMacro" exact="[ macro.weapon_gen_mine_02_macro          ].random" weight="$WeightMine02" />
+										<set_value name="$EncounterObjMacro" exact="[ macro.weapon_gen_mine_03_macro          ].random" weight="$WeightMine03" />
+										<set_value name="$EncounterObjMacro" exact="[ macro.ship_gen_xs_lasertower_01_a_macro ].random" weight="$WeightLaserXS" />
+										<set_value name="$EncounterObjMacro" exact="[ macro.ship_gen_s_lasertower_01_a_macro  ].random" weight="$WeightLaserS" />
+										<do_all weight="$WeightDebris">
+											<include_actions ref="EncounterDebrisDefinitions" />
+										</do_all>
+									</do_any>
+
+									<do_if value="$EncounterAnchorExists?">
+										<do_if value="$EncounterObjMacro.isclass.ship">											<!-- Lasertowers -->
+											<create_ship name="$EncounterSubObj" macro="$EncounterObjMacro" sector="player.sector">
+												<pilot>
+													<select race="race.drone"/>
+												</pilot>
+												<owner exact="$EncounterFaction" overridenpc="true"/>
+												<safepos object="$EncounterAnchor" min="$MinRange" max="$MaxRange" />
+												<rotation pitch="$Pitch" yaw="$Yaw" roll="$Roll" />
+											</create_ship>
+											<set_value name="$DefenceType" exact="'Laser'" />
+										</do_if>
+										<do_else>											<!-- Mines & Wrecks -->
+											<create_object name="$EncounterSubObj" macro="$EncounterObjMacro" owner="$EncounterFaction" sector="player.sector" spinning="true">
+												<safepos object="$EncounterAnchor" min="$MinRange" max="$MaxRange" />
+												<rotation pitch="$Pitch" yaw="$Yaw" roll="$Roll" />
+											</create_object>
+											<set_value name="$DefenceType" exact="'Mine '" />
+										</do_else>
+										<set_value name="$EncounterSubObjDistance" exact="($EncounterAnchor.distanceto.{$EncounterSubObj})i" />
+
+									</do_if>
+
+									<do_else>
+										<do_if value="$Count % 10 == 0" comment="Increase the distance for large defence grids , + 1km every 10 mines or lasertowers">
+											<set_value name="$EncounterSubObjRadius" exact="$EncounterSubObjRadius + 1km"/>
+										</do_if>
+
+										<do_if value="$EncounterObjMacro.isclass.ship">											<!-- Lasertowers -->
+											<create_ship name="$EncounterSubObj" macro="$EncounterObjMacro" sector="player.sector">
+												<pilot>
+													<select race="race.drone"/>
+												</pilot>
+												<owner exact="$EncounterFaction" overridenpc="true"/>
+												<safepos value="$EncounterPosition" min="$EncounterSubObjRadius" radius="$EncounterSubObjRadius" />
+												<rotation pitch="$Pitch" yaw="$Yaw" roll="$Roll" />
+											</create_ship>
+											<set_value name="$DefenceType" exact="'Laser'" />
+										</do_if>
+										<do_else>											<!-- Mines & Wrecks -->
+											<set_value name="$EncounterAnchor" exact="$EncounterObjMacro" />
+											<create_object name="$EncounterSubObj" macro="$EncounterObjMacro" owner="$EncounterFaction" sector="player.sector" spinning="true">
+												<safepos value="$EncounterPosition" min="$EncounterSubObjRadius" radius="$EncounterSubObjRadius" />
+												<rotation pitch="$Pitch" yaw="$Yaw" roll="$Roll" />
+											</create_object>
+											<set_value name="$DefenceType" exact="if $EncounterSubObj.isclass.mine then 'Mine ' else 'Wreck'" />
+										</do_else>
+
+										<set_value name="$EncounterSubObjDistance" exact="0" />
+
+									</do_else>
+
+									<set_object_hull object="$EncounterSubObj" min="10 + stat.fight_rank + ($HullQuality)i" max="30 + stat.fight_rank + (2 * $HullQuality)i" />
+
+									<do_if value="$EncounterSubObj.exists and $EncounterSubObj.isclass.ship">
+										<!-- <add_relation_boost object="$EncounterSubObj" otherobject="player.ship" value="-30" decay="1" delay="10min" silent="true" /> -->
+										<set_object_shield object="$EncounterSubObj" min="10 + stat.fight_rank + ($HullQuality)i" max="30 + stat.fight_rank + (2 * $HullQuality)i" />
+										<!-- <create_order name="$Order" id="'Lasertower'" object="$EncounterSubObj" immediate="true" default="true" /> -->
+									</do_if>
+
+									<!--  .... TODO create cue which triggers to do this with warning when player is too close -->
+									<do_if value="[ tag.crate, tag.salvage ].indexof.{$EncounterType} != 0">
+										<do_if value="$EncounterObjMacro == macro.weapon_gen_mine_03_macro">
+											<set_object_foe_list object="$EncounterSubObj" factions="$EncounterSubObjKillList" />
+										</do_if>
+										<do_else>
+											<set_relation_boost object="$EncounterSubObj" value="-1" faction="faction.player" silent="true" chance="if $AttackPlayer then 100 else 0" />
+										</do_else>
+									</do_if>
+
+									<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 %s   : # %s %s %s Hull/Shield = %s%%/%s%%/%s (%s)'.[(player.age)i, $DefenceType, $Count, $EncounterSubObj.idcode, $EncounterObjMacro, $EncounterSubObj.hullpercentage, $EncounterSubObj.shieldpercentage,  $EncounterSubObj.distanceto.{[player.sector, $EncounterPosition]}, $EncounterType ]" output="true" append="true" />
+
+								</do_all>
+							</do_if>
+
+						</actions>
+					</cue>
+
+					<!-- PROBE CUE -->
+					<cue name="EncounterCreateProbes" instantiate="true">
+						<conditions>
+							<event_cue_signalled/>
+						</conditions>
+						<!-- Wait for other stuff to be created so 'safepos' does not warp probes or satellites into the middle of proceeding objects -->
+						<delay exact="20ms"/>
+						<actions>
+
+							<!-- Find nearest station - this affects type of satellite encounter-->
+							<find_station name="$Stations" multiple="true" space="player.sector">
+								<match_is_in_view_of vertical="150deg" horizontal="150deg" object="player.ship" space="player.sector" />
+							</find_station>
+							<set_value name="$NearestStation" exact="500km" />
+							<do_all exact="$Stations.count" counter="$i">
+								<set_value name="$distance" exact="$Stations.{$i}.distanceto.{player.ship}" />
+								<do_if value="$distance le $NearestStation">
+									<set_value name="$NearestStation" exact="$distance" />
+								</do_if>
+							</do_all>
+
+							<set_value name="$ProbeHullFactor" exact="70 * player.sector.coresize / player.ship.distanceto.{player.sector}" />
+							<set_value name="$NavBeaconChance" exact="(10+(player.ship.distanceto.{player.sector}-(player.sector.coresize/2km))/3km)i" />
+							<set_value name="$RescProbeChance" exact="[(4*(50km-$ResourceDist)/1km)i,0].max" />
+							<set_value name="$SatelMk01Chance" exact="[(8*(30km-$NearestStation)/1km)i,3].max" />
+							<set_value name="$SatelMk02Chance" exact="[(2*(70km-$NearestStation)/1km)i,1].max" />
+							<set_value name="$NavBeaconList" exact="[ macro.env_deco_nav_beacon_t1_macro,macro.env_deco_nav_beacon_t2_macro ]" />
+
+							<do_if value="$EncounterType == tag.probe or $EncounterAnchor == null">
+								<remove_value name="$EncounterAnchorExists" />
+								<set_value name="$EncounterSubObjCount" exact="1" />
+							</do_if>
+							<do_else>
+								<set_value name="$EncounterAnchorExists" exact="true" />
+								<set_value name="$EncounterSubObjCount" min="1" max="[1,[5,($EncounterAnchor.size/3km)i].min].max" />
+								<set_value name="$RescProbeChance" exact="0" />
+							</do_else>
+
+							<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Probe   : Distance to sector centre/station/resources %s/%s/%skm (%s) Nav/RProbe/SatMk1/SatMk2 %s%%/%s%%/%s%%/%s%% '.[(player.age)i, (player.ship.distanceto.{player.sector}/1km)i, ($NearestStation/1km)i, ($ResourceDist/1km)i, $EncounterSubObjCount, $NavBeaconChance, $RescProbeChance, $SatelMk01Chance, $SatelMk02Chance ]" output="true" append="true" />
+
+							<do_all exact="$EncounterSubObjCount" counter="$Count">
+
+								<!-- Set Pitch/Roll/Yaw for each probe as these should be random and not aligned in anyway -->
+								<include_actions ref="EncounterSetPitchYawRoll"/>
+
+								<set_value name="$EncounterObjMacro" exact="null" />
+								<set_value name="$EncounterSubObj" exact="null" />
+								<do_any>
+									<set_value name="$EncounterObjMacro" exact="[ macro.eq_arg_satellite_01_macro ].random" weight="$SatelMk01Chance" />
+									<set_value name="$EncounterObjMacro" exact="[ macro.eq_arg_satellite_02_macro ].random" weight="$SatelMk02Chance" />
+									<set_value name="$EncounterObjMacro" exact="$NavBeaconList.random" weight="$NavBeaconChance" />
+									<set_value name="$EncounterObjMacro" exact="[ macro.eq_arg_resourceprobe_01_macro ].random" weight="$RescProbeChance" />
+									<set_value name="$EncounterObjMacro" exact="[ macro.ship_gen_xs_distressbeacon_01_a_macro ].random" weight="1" />
+								</do_any>
+
+								<do_if value="$EncounterObjMacro.isclass.resourceprobe">									<!-- Resource probes need special handling -->
+									<append_to_list name="$EncounterFactionList" exact="[ faction.xenon, faction.xenon ]"/>
+									<!-- Only resource probes get possible Xenon ownership-->
+									<do_if value="$EncounterAnchor.isclass.object">										<!-- Do not place resource probes against wrecks (swap with a Nav Beacon) -->
+										<set_value name="$EncounterObjMacro" exact="$NavBeaconList.random" />
+									</do_if>
+								</do_if>
+
+								<do_if value="$EncounterAnchor.isclass.asteroid">									<!-- Increase chance of resource probes near asteroids -->
+									<set_value name="$EncounterObjMacro" exact="[ macro.eq_arg_resourceprobe_01_macro ].random" chance="$EncounterAnchor.size/100" />
+								</do_if>
+								<do_elseif value="$EncounterType == tag.salvage">									<!-- Increase chance of distress beacons near salvagable ships -->
+									<set_value name="$EncounterObjMacro" exact="[ macro.ship_gen_xs_distressbeacon_01_a_macro ].random" chance="[15, $EncounterAnchor.size/10].min" />
+								</do_elseif>
+								<do_elseif value="$EncounterType == tag.wreck">									<!-- Increase signs of conflict jetsam near wrecks -->
+									<set_value name="$EncounterObjMacro" exact="[ macro.ship_gen_xs_boardingpod_01_a_macro, macro.ship_gen_xs_distressbeacon_01_a_macro, macro.engine_gen_xs_escapepod_01_macro, macro.ship_gen_xs_escapepod_01_a_macro ].random" chance="[15, $EncounterAnchor.size/10].min" />
+								</do_elseif>
+
+								<do_if value="$EncounterAnchorExists?">
+									<create_object name="$EncounterSubObj" macro="$EncounterObjMacro" owner="$EncounterFactionList.random" sector="player.sector">
+										<safepos object="$EncounterAnchor" min="[10m,$EncounterAnchor.size/3m].max" max="[20m,[$EncounterAnchor.size/2m,1km].min].max" />
+										<rotation pitch="$Pitch" yaw="$Yaw" roll="$Roll" />
+									</create_object>
+									<set_value name="$EncounterProbeDistance" exact="($EncounterAnchor.distanceto.{$EncounterSubObj})i" />
+								</do_if>
+								<do_else>
+									<set_value name="$EncounterAnchor" exact="$EncounterObjMacro" />
+									<include_actions ref="EncounterSetWarpPosition"/>
+									<create_object name="$EncounterSubObj" macro="$EncounterObjMacro" owner="$EncounterFactionList.random" sector="player.sector">
+										<safepos object="player.ship" x="$X2" y="$Y2" z="$Z2"/>
+										<rotation pitch="$Pitch" yaw="$Yaw" roll="$Roll" />
+									</create_object>
+									<set_value name="$EncounterProbeDistance" exact="0" />
+								</do_else>
+
+								<do_if value="$EncounterSubObj.isclass.navbeacon">
+									<do_if value="$EncounterObjName?">
+										<set_object_name object="$EncounterSubObj" name="$EncounterObjName" />
+									</do_if>
+									<do_else>
+										<include_actions ref="EncounterCreateName" />
+										<set_value name="$EncounterNameIndex" min="1" max="999" />
+										<set_object_name object="$EncounterSubObj" name="'Beacon ' + $EncounterNameType1 + $EncounterNameIndex" />
+									</do_else>
+								</do_if>
+
+								<set_object_hull object="$EncounterSubObj" min="10 + stat.fight_rank + ($ProbeHullFactor)i" max="30 + stat.fight_rank + (2 * $ProbeHullFactor)i" />
+
+								<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Probe   : # %s %s %s (%s) Min/Max Hull %s%%/%s%% @ %sm (%s/%s)'.[(player.age)i, $Count, $EncounterSubObj.name, $EncounterObjMacro, $EncounterSubObj.owner, 10 + ($ProbeHullFactor)i, 30 + (2 * $ProbeHullFactor)i, $EncounterProbeDistance, $EncounterType, $EncounterAnchor ]" output="true" append="true" />
+							</do_all>
+						</actions>
+					</cue>
+
+					<!-- DEBRIS CUE -->
+					<cue name="EncounterCreateDebris" instantiate="true">
+						<conditions>
+							<event_cue_signalled/>
+						</conditions>
+						<!-- Wait for other stuff to be created so 'safepos' does not warp probe into the middle of proceeding objects -->
+						<delay exact="5ms"/>
+						<actions>
+							<include_actions ref="EncounterSetClassType" />
+							<include_actions ref="EncounterDebrisDefinitions" />
+
+							<!-- Create object out of view first so we can set stuff up before it is brought into play and find out how big it is -->
+							<create_object name="$EncounterDebris" macro="$EncounterObjMacro" owner="$EncounterFactionList.random" sector="player.sector" spinning="true">
+								<safepos object="player.ship" x="0m" y="0m" z="150km"/>
+							</create_object>
+
+							<set_object_hull object="$EncounterDebris" min="50 + stat.fight_rank" max="100 + stat.trade_rank" profile="decreasing" scale="2" />
+
+							<do_if value="$EncounterObjName?">
+								<set_object_name object="$EncounterDebris" name="$EncounterObjName" />
+							</do_if>
+
+							<!-- Adjust final position depending on size of encounter object -->
+							<set_value name="$X2" exact="$X * $EncounterSizeFactor" />
+							<set_value name="$Y2" exact="$Y * $EncounterSizeFactor" />
+
+							<set_value name="$Z2" min="[ 37km, player.ship.maxradarrange ].max" max="[  46km, player.ship.maxradarrange * 1.2 ].max" />
+							<set_value name="$Z2" min="88km" max="[  93km, player.ship.maxradarrange * 1.2 ].max" chance="if ($EncounterDebris.size ge  500) then 100 else 0" />
+							<set_value name="$Z2" min="129km" max="[ 130km, player.ship.maxradarrange * 1.2 ].max" chance="if ($EncounterDebris.size ge 1500) then 100 else 0" />
+
+							<include_actions ref="EncounterSetPitchYawRoll"/>
+
+							<do_if value="$EncounterType == tag.wreck or $EncounterAnchor == null">
+								<warp object="$EncounterDebris" sector="player.sector">
+									<safepos object="player.ship" x="$X2" y="$Y2" z="$Z2"/>
+									<rotation pitch="$Pitch" yaw="$Yaw" roll="$Roll" />
+								</warp>
+							</do_if>
+							<do_else>
+								<warp object="$EncounterDebris" sector="player.sector">
+									<safepos object="$EncounterAnchor" min="$EncounterAnchor.size/2.6" max="[$EncounterAnchor.size/2.1,1km].min" />
+									<rotation pitch="$Pitch" yaw="$Yaw" roll="$Roll" />
+								</warp>
+							</do_else>
+							<set_value name="$EncounterAnchor" exact="$EncounterDebris" />
+
+							<set_value name="$EncounterCrateCount" exact="[ 16, (sqrt($EncounterDebris.size)/6)i ].min" />
+							<set_value name="$EncounterCrateChance" exact="[ 0, (135 - 5 * Manager.$EncWreckChance)i ].max" />
+							<set_value name="$EncounterProbeChance" exact="(100 * $EncounterSizeFactor * player.sector.security * player.sector.coresize / player.ship.distanceto.{player.sector} )i" />
+
+							<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Wreck   : %s (%s) Size/Hull = %sm/%s (Crates %s/%s%% Mine %s%% Probes %s/%s%%) [%s, %s, %s] (%s/%s)'.[(player.age)i, $EncounterObjMacro, $EncounterSizeFactor, ($EncounterDebris.size)i, ($EncounterDebris.hull)i, $EncounterCrateCount, $EncounterCrateChance, Manager.$EncMinesChance, [1,[5,($EncounterDebris.size/3km)i].min].max, $EncounterProbeChance, ($X2/10)i/100f, ($Y2/10)i/100f, ($Z2/10)i/100f, $EncounterType, $EncounterAnchor ]" output="true" append="true" />
+
+							<signal_cue_instantly cue="EncounterCreateLockBox" chance="$EncounterCrateChance / 2" />
+							<signal_cue_instantly cue="EncounterCreateCrates" chance="$EncounterCrateChance" />
+							<signal_cue_instantly cue="EncounterCreateMineField" chance="Manager.$EncMinesChance" />
+							<signal_cue_instantly cue="EncounterCreateProbes" chance="$EncounterProbeChance" />
+						</actions>
+					</cue>
+
+					<cue name="Cleanup_DeepSpace_Encounter" instantiate="true">
+						<conditions>
+							<check_any>
+								<event_object_destroyed object="$LeadShip"/>
+								<event_object_abandoned object="$LeadShip"/>
+								<check_all>
+									<!-- remember that this event is fired AFTER ownership is changed. so ownership checks apply to the new owner. -->
+									<event_object_changed_owner object="$LeadShip"/>
+									<check_value value="not $LeadShip.coverowner"/>
+								</check_all>
+							</check_any>
+						</conditions>
+						<delay min="1s" max="2s"/>
+						<actions>
+							<!-- <debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Clean : %s Event %s triggered for %s %s. Checking to cleanup instance'.[(player.age)i, @$LeadShip.idcode, event.name, @$LeadShip.knownname, @$LeadShip]" output="true" append="true" /> -->
+							<include_actions ref="ShipCleanup"/>
+						</actions>
+					</cue>
+
+					<cue name="DeepSpace_Patch_V1_50_Cleanup" onfail="cancel">
+						<conditions>
+							<check_value value="$V150_patch?"/>
+						</conditions>
+						<delay min="5s" max="10s"/>
+						<actions>
+							<include_actions ref="ShipCleanup"/>
+						</actions>
+					</cue>
+
+					<!--TODO @Owen put the majority of this into a library-->
+					<cue name="DeepSpace_Generate_Encounters" instantiate="true">
+						<conditions>
+							<event_cue_signalled cue="NewEncounterPosition"/>
+						</conditions>
+						<delay min="1ms" max="50ms"/>
+						<actions>
+
+							<clear_list list="$WarpedSubordinates" />
+
+							<set_value name="$TriggerEncounter" exact="false" />
+							<set_value name="$EncounterAnchor" exact="null" />
+							<set_value name="$SectorDeepSpaceValue" exact="( player.sector.coresize / 2km )i" />
+							<set_value name="$SectorCenterDistance" exact="player.ship.distanceto.{player.sector}/1km" />
+
+							<!-- Set encounter position, this is sometimes modified later -->
+							<set_value name="$X" min="player.ship.maxradarrange / -2" max="player.ship.maxradarrange / 2" />
+							<set_value name="$Y" min="player.ship.maxradarrange / -4" max="player.ship.maxradarrange / 4" />
+							<set_value name="$Z" min="1.2 * player.ship.maxradarrange" max="1.3 * player.ship.maxradarrange" />
+
+							<!-- <create_position name="$PlayerPosition" object="player.ship" space="player.sector" /> -->
+							<create_position name="$EncounterPosition" object="player.ship" x="$X" y="$Y" z="$Z" space="player.sector"/>
+
+							<set_value name="$EncounterType" exact="tag.void" />
+
+							<do_if value="Manager.$EncounterInstances le Manager.$EncounterSubObjMax" chance="Manager.$EncounterSubObjChance">
+								<do_any>
+									<set_value name="$EncounterType" exact="tag.asteroid" weight="1 * Manager.$EncAsteroidChance" />
+									<set_value name="$EncounterType" exact="tag.wreck" weight="1 * Manager.$EncWreckChance" />
+									<set_value name="$EncounterType" exact="tag.probe" weight="1 * Manager.$EncProbeChance" />
+									<set_value name="$EncounterType" exact="tag.defencegrid" weight="1 * Manager.$EncDefenceGridChance" />
+									<set_value name="$EncounterType" exact="tag.minefield" weight="1 * Manager.$EncMineFieldChance" />
+									<set_value name="$EncounterType" exact="tag.crate" weight="1 * Manager.$EncCrateChance" />
+									<set_value name="$EncounterType" exact="tag.lockbox" weight="1 * Manager.$EncLockBoxChance" />
+									<set_value name="$EncounterType" exact="tag.salvage" weight="1 * Manager.$EncSalvageChance" />
+									<set_value name="$EncounterType" exact="tag.rare" weight="1 * Manager.$EncRareChance" />
+									<!-- <set_value name="$EncounterType" exact="tag.rare" weight="100" /> -->
+								</do_any>
+							</do_if>
+
+							<do_if value="Manager.$EncounterInstances lt Manager.$EncounterInstancesMax" chance="$EncounterChance">
+								<!-- Clear variables -->
+								<remove_value name="$EncounterObjName" />
+
+								<!-- Find nearest resource area -->
+								<find_closest_resource refobject="player.ship" sector="$ResourceSector" ware="[ ware.ore, ware.silicon, ware.ice, ware.nividium, ware.helium, ware.methane, ware.hydrogen ]" position="$ResourcePos" distance="$ResourceDist">
+									<refposition object="player.ship"/>
+								</find_closest_resource>
+								<!-- <find_asteroid_in_cluster name="$pickup" cluster="player.cluster" refobject="player.ship" canpickup="false" multiple="true" maxdistance="1000km" ware="[ware.ore, ware.silicon, ware.ice, ware.nividium]" viewangle="360deg" /> -->
+
+								<!-- Copy X/Y/Z variables, the originals are sometimes used as a base position and final positions may be calculated from them) -->
+								<set_value name="$X2" exact="$X" />
+								<set_value name="$Y2" exact="$Y" />
+								<set_value name="$Z2" exact="$Z" />
+
+								<!-- Now run the Sub-Encounter code -->
+
+								<do_if value="$EncounterType != tag.void">
+
+									<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Type    : (Ast %s%% Debris %s%% Probe %s%% Mine %s%%/%s%% Crate %s%% Lbx %s%% Ship %s%% Rare %s%%) (%s)'.[(player.age)i, Manager.$EncAsteroidChance, Manager.$EncWreckChance, Manager.$EncProbeChance, Manager.$EncDefenceGridChance, Manager.$EncMineFieldChance, Manager.$EncCrateChance, Manager.$EncLockBoxChance, Manager.$EncSalvageChance, Manager.$EncRareChance, $EncounterType ]" output="true" append="true" />
+									<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Check   : Distance to sector centre/resources %s/%skm Security Filter %s%%'.[(player.age)i, ($SectorCenterDistance)i, ($ResourceDist/1km)i, ((1.0f - (player.sector.security / $EncounterFilter )) * 100)i ]" output="true" append="true" />
+
+									<!-- ASTEROIDS -->
+									<do_if value="$EncounterType == tag.asteroid">
+
+										<include_actions ref="EncounterSetFaction" />
+										<include_actions ref="EncounterSetClassType" />
+
+										<create_group groupname="$AsteroidCluster"/>
+										<create_list name="$AsteroidWareList"/>
+
+										<set_value name="$AsteroidsMaxSpawn" min="1" max="[ 1, ( 1 * $SectorCenterDistance / $SectorDeepSpaceValue )i ].max" profile="decreasing" scale="2"/>
+										<!--	set_value name="$AsteroidsMaxWarps" min="0" max="[ 1, ( 2 * $AsteroidsMaxSpawn / 3 )i ].max" />		-->
+
+										<set_value name="$AsteroidMaxSize" exact="0" />
+										<set_value name="$AsteroidMineFactor" exact="1" />
+										<!--	<set_value name="$AsteroidsFound" exact="0" />	-->
+										<set_value name="$AsteroidWareChance" min="30 + stat.trade_rank" max="30 + stat.trade_rank + (1.0f - player.sector.security)*30" profile="decreasing" scale="2" />
+										<set_value name="$AsteroidYieldTotal" exact="0" />
+
+										<set_value name="$AsteroidChance_Debris" exact="Manager.$EncSalvageChance + Manager.$EncWreckChance" />
+										<set_value name="$AsteroidChance_Ore" exact="[0,((5000-sqrt(($SectorCenterDistance -  500)^2))/100)i ].max" />
+										<set_value name="$AsteroidChance_Silicon" exact="[0,((4000-sqrt(($SectorCenterDistance - 2000)^2))/120)i ].max" />
+										<set_value name="$AsteroidChance_Ice" exact="[0,((5000-sqrt(($SectorCenterDistance - 4500)^2))/120)i ].max" />
+										<set_value name="$AsteroidChance_Nividium" exact="[0,((4000-sqrt(($SectorCenterDistance - 2500)^2))/400)i ].max" />
+										<set_value name="$AsteroidChance_Crystals" exact="[0,((4000-sqrt(($SectorCenterDistance - 3500)^2))/200)i ].max" />
+										<set_value name="$AsteroidChance_Xenon" exact="[0,((3000-sqrt(($SectorCenterDistance - 4500)^2))/600)i ].max" />
+										<set_value name="$AsteroidChance_Others" exact="[0,((3000-sqrt(($SectorCenterDistance - 5000)^2))/600)i ].max" />
+
+										<set_value name="$ClusterDebrisCount" min="[ 0, ($AsteroidsMaxSpawn/8)i ].max" max="[ 1, ($AsteroidsMaxSpawn/6)i ].max" />
+										<set_value name="$ClusterDebrisCount" exact="0" />
+										<set_value name="$ClusterTotalWidth" exact="0" />
+
+										<set_value name="$AsteroidsMaxSpawn" exact="( 1.5 - player.sector.security ) * $AsteroidsMaxSpawn + $ClusterDebrisCount" />
+
+										<do_if value="player.sector.owner == faction.xenon">
+											<set_value name="$AsteroidChance_Xenon" exact="$AsteroidChance_Xenon+20" />
+										</do_if>
+										<!--
+										<do_if value="$SectorCenterDistance lt ($SectorDeepSpaceValue + (6 * player.ship.maxradarrange))">
+											<create_position name="$ResourcePosition" space="$ResourceSector" value="$ResourcePos"/>
+											<find_object groupname="$asteroids" class="[class.asteroid]" space="player.sector" multiple="true">
+												<match_distance object="player.ship" min="6 * player.ship.maxradarrange" space="$ResourceSector" value="$ResourcePosition"/>
+												<match_is_in_view_of object="player.ship" horizontal="120deg" vertical="90deg" negate="true" />
+											</find_object>
+											<set_value name="$AsteroidsFound" exact="$asteroids.count" />	
+										</do_if>
+										-->
+										<do_any>
+											<set_value name="$EncounterClassTag" exact="tag.trader" weight="70" />
+											<!-- Civilian -->
+											<set_value name="$EncounterClassTag" exact="tag.military" weight="15" />
+											<!-- Military -->
+											<set_value name="$EncounterClassTag" exact="tag.criminal" weight="10" />
+											<!-- Pirate   -->
+											<set_value name="$EncounterClassTag" exact="tag.xenon" weight="5" />
+											<!-- Xenon    -->
+										</do_any>
+
+										<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Roids   : Ore/Sil/Ice/Niv/Cry/Xen/Oth = %s%%/%s%%/%s%%/%s%%/%s%%/%s%%/%s%% (Ware %s%%)'.[(player.age)i, $AsteroidChance_Ore, $AsteroidChance_Silicon, $AsteroidChance_Ice, $AsteroidChance_Nividium, $AsteroidChance_Crystals, $AsteroidChance_Xenon, $AsteroidChance_Others, ($AsteroidWareChance)i ]" output="true" append="true" />
+										<!-- <debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Roids   : Spawn = %s/%s Warp/Found = %s/%s [%s,%s,%s]'.[(player.age)i, $AsteroidsMaxSpawn, [ 1, ( 1 * $SectorCenterDistance / $SectorDeepSpaceValue )i ].max, [ $AsteroidsFound, $AsteroidsMaxWarps ].min, $AsteroidsFound, ($X2)i, ($Y2)i, ($Z2)i ]" output="true" append="true" /> -->
+
+										<do_all exact="$AsteroidsMaxSpawn" counter="$Roid">
+											<do_any>
+												<!-- ASTEROIDS - Ore -->
+												<do_all weight="$AsteroidChance_Ore">
+													<do_any>
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_ore_xs_01_macro, macro.env_ast_ore_xs_02_macro, macro.env_ast_ore_xs_03_macro, macro.env_ast_ore_xs_04_macro, macro.env_ast_ore_xs_05_macro                                                                      ].random" weight="10" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_ore_s_01_macro,  macro.env_ast_ore_s_02_macro,  macro.env_ast_ore_s_03_macro,  macro.env_ast_ore_s_04_macro,  macro.env_ast_ore_s_05_macro                                                                       ].random" weight="25" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_ore_m_01_macro,  macro.env_ast_ore_m_02_macro,  macro.env_ast_ore_m_03_macro,  macro.env_ast_ore_m_04_macro,  macro.env_ast_ore_m_05_macro, macro.env_ast_ore_m_06_macro, macro.env_ast_ore_m_explosive_03_macro ].random" weight="35" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_ore_l_01_macro,  macro.env_ast_ore_l_02_macro,  macro.env_ast_ore_l_03_macro,  macro.env_ast_ore_l_04_macro,  macro.env_ast_ore_l_05_macro                                                                       ].random" weight="15" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_ore_xl_01_macro, macro.env_ast_ore_xl_02_macro                                                                                                                                                                   ].random" weight="10" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_ore_xxl_01_macro                                                                                                                                                                                                 ].random" weight="5" />
+													</do_any>
+													<set_value name="$AsteroidWare" exact="tag.ore" />
+												</do_all>
+
+												<!-- ASTEROIDS - Silicon -->
+												<do_all weight="$AsteroidChance_Silicon">
+													<do_any>
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_crystal_xs_01_macro, macro.env_ast_crystal_xs_02_macro, macro.env_ast_crystal_xs_03_macro, macro.env_ast_crystal_xs_04_macro, macro.env_ast_crystal_xs_05_macro, macro.env_ast_crystal_xs_06_macro ].random" weight="5" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_crystal_s_01_macro,  macro.env_ast_crystal_s_02_macro,  macro.env_ast_crystal_s_03_macro,  macro.env_ast_crystal_s_04_macro,  macro.env_ast_crystal_s_05_macro,  macro.env_ast_crystal_s_06_macro  ].random" weight="15" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_crystal_m_01_macro,  macro.env_ast_crystal_m_02_macro,  macro.env_ast_crystal_m_03_macro,  macro.env_ast_crystal_m_04_macro,  macro.env_ast_crystal_m_05_macro,  macro.env_ast_crystal_m_06_macro  ].random" weight="40" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_crystal_l_01_macro,  macro.env_ast_crystal_l_02_macro,  macro.env_ast_crystal_l_03_macro                                                                                                           ].random" weight="35" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_crystal_xl_01_macro                                                                                                                                                                                ].random" weight="5" />
+													</do_any>
+													<set_value name="$AsteroidWare" exact="tag.silicon" />
+												</do_all>
+
+												<!-- ASTEROIDS - Ice -->
+												<do_all weight="$AsteroidChance_Ice">
+													<do_any>
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_ice_xs_01_macro, macro.env_ast_ice_xs_02_macro, macro.env_ast_ice_xs_03_macro, macro.env_ast_ice_xs_04_macro, macro.env_ast_ice_xs_05_macro, macro.env_ast_ice_xs_06_macro ].random" weight="10" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_ice_s_01_macro,  macro.env_ast_ice_s_02_macro,  macro.env_ast_ice_s_03_macro,  macro.env_ast_ice_s_04_macro,  macro.env_ast_ice_s_05_macro,  macro.env_ast_ice_s_06_macro  ].random" weight="25" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_ice_m_01_macro,  macro.env_ast_ice_m_02_macro,  macro.env_ast_ice_m_03_macro,  macro.env_ast_ice_m_04_macro,  macro.env_ast_ice_m_05_macro,  macro.env_ast_ice_m_06_macro  ].random" weight="35" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_ice_l_01_macro,  macro.env_ast_ice_l_02_macro,  macro.env_ast_ice_l_03_macro                                                                                               ].random" weight="25" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_ice_xl_01_macro                                                                                                                                                            ].random" weight="5" />
+													</do_any>
+													<set_value name="$AsteroidWare" exact="tag.ice" />
+												</do_all>
+
+												<!-- ASTEROIDS - Nividum -->
+												<do_all weight="$AsteroidChance_Nividium">
+													<do_any>
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_niv_xs_01_macro, macro.env_ast_niv_xs_02_macro, macro.env_ast_niv_xs_03_macro, macro.env_ast_niv_xs_04_macro, macro.env_ast_niv_xs_05_macro ].random" weight="5" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_niv_s_01_macro,  macro.env_ast_niv_s_02_macro,  macro.env_ast_niv_s_03_macro,  macro.env_ast_niv_s_04_macro,  macro.env_ast_niv_s_05_macro  ].random" weight="15" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_niv_m_01_macro,  macro.env_ast_niv_m_02_macro,  macro.env_ast_niv_m_03_macro,  macro.env_ast_niv_m_04_macro,  macro.env_ast_niv_m_05_macro  ].random" weight="45" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_niv_l_01_macro,  macro.env_ast_niv_l_02_macro,  macro.env_ast_niv_l_03_macro,  macro.env_ast_niv_l_04_macro,  macro.env_ast_niv_l_05_macro  ].random" weight="30" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_niv_xl_01_macro                                                                                                                             ].random" weight="5" />
+													</do_any>
+													<set_value name="$AsteroidWare" exact="tag.nividium" />
+												</do_all>
+
+												<!-- ASTEROIDS - Crystal -->
+												<do_all weight="$AsteroidChance_Crystals">
+													<do_any>
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_crystal_xs_01_macro, macro.env_ast_crystal_xs_02_macro, macro.env_ast_crystal_xs_03_macro, macro.env_ast_crystal_xs_04_macro, macro.env_ast_crystal_xs_05_macro, macro.env_ast_crystal_xs_06_macro ].random" weight="5" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_crystal_s_01_macro,  macro.env_ast_crystal_s_02_macro,  macro.env_ast_crystal_s_03_macro,  macro.env_ast_crystal_s_04_macro,  macro.env_ast_crystal_s_05_macro,  macro.env_ast_crystal_s_06_macro  ].random" weight="15" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_crystal_m_01_macro,  macro.env_ast_crystal_m_02_macro,  macro.env_ast_crystal_m_03_macro,  macro.env_ast_crystal_m_04_macro,  macro.env_ast_crystal_m_05_macro,  macro.env_ast_crystal_m_06_macro  ].random" weight="40" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_crystal_l_01_macro,  macro.env_ast_crystal_l_02_macro,  macro.env_ast_crystal_l_03_macro                                                                                                           ].random" weight="30" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_crystal_xl_01_macro                                                                                                                                                                                ].random" weight="10" />
+													</do_any>
+													<set_value name="$AsteroidWare" exact="tag.crystals" />
+												</do_all>
+
+												<!-- ASTEROIDS - Xenon -->
+												<do_all weight="$AsteroidChance_Xenon">
+													<do_any>
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_asteroid_xenon_xs_01_macro                                                                                                                                                                                                                                            ].random" weight="10" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_asteroid_xenon_s_01_macro                                                                                                                                                                                                                                             ].random" weight="25" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_asteroid_xenon_m_01_macro,   macro.env_asteroid_xenon_m_02_macro                                                                                                                                                                                                      ].random" weight="35" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_asteroid_xenon_l_01_macro,   macro.env_asteroid_xenon_l_02_macro                                                                                                                                                                                                      ].random" weight="15" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_asteroid_xenon_xl_01_macro,  macro.env_asteroid_xenon_xl_02_macro,  macro.env_asteroid_xenon_xl_03_macro,  macro.env_asteroid_xenon_xl_04_macro,  macro.env_asteroid_xenon_xl_05_macro                                                                                ].random" weight="10" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_asteroid_xenon_xxl_01_macro, macro.env_asteroid_xenon_xxl_02_macro, macro.env_asteroid_xenon_xxl_03_macro, macro.env_asteroid_xenon_xxl_04_macro, macro.env_asteroid_xenon_xxl_05_macro, macro.env_asteroid_xenon_xxl_06_macro, macro.env_asteroid_xenon_xxl_07_macro ].random" weight="5" />
+													</do_any>
+													<set_value name="$AsteroidWare" exact="[ tag.ore, tag.ore, tag.ore, tag.silicon, tag.silicon, tag.crystals, tag.nividium ].random" />
+												</do_all>
+
+												<!-- ASTEROIDS - Others -->
+												<do_all weight="$AsteroidChance_Others">
+													<do_any>
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_rad_xs_01_macro, macro.env_ast_rad_m_01_macro ].random" weight="5" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_crystal_m_01_tes_macro, macro.env_ast_niv_m_01_tes_macro, macro.asteroid_turret_m_01_macro, macro.env_ast_ore_m_01_tes_macro, macro.env_ast_ore_m_explosive_03_macro ].random" weight="5" />
+													</do_any>
+													<do_if value="$EncounterObjMacro == macro.asteroid_turret_m_01_macro">
+														<append_to_list name="$EncounterFactionList" exact="[ faction.xenon, faction.xenon ]"/>
+													</do_if>
+													<set_value name="$EncounterFaction" exact="$EncounterFactionList.random" chance="100 * player.sector.security * player.sector.coresize / $SectorCenterDistance" />
+													<set_value name="$AsteroidWare" exact="[ tag.ore, tag.ore, tag.ore, tag.silicon, tag.nividium ].random" />
+												</do_all>
+
+												<do_all weight="if $Roid % 2 != 0 then 0 else if $ClusterDebrisCount ge 1 then 100 else $AsteroidChance_Debris">													<!-- Avoids asteroids being replaced by debris too often -->
+													<set_value name="$ClusterDebrisCount" exact="$ClusterDebrisCount - 1" />
+													<include_actions ref="EncounterDebrisDefinitions" />
+													<!-- <debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Roids   : # %s Wreck %s '.[(player.age)i, $Roid, $EncounterObjMacro ]" output="true" append="true" /> -->
+												</do_all>
+
+											</do_any>
+
+											<!-- Set Pitch/Roll/Yaw for each asteroid as these should be random and not aligned in anyway -->
+											<include_actions ref="EncounterSetPitchYawRoll"/>
+
+											<create_object name="$AsteroidSubObj" macro="$EncounterObjMacro" sector="player.sector" spinning="true">
+												<safepos object="player.ship" z="150km" radius="3.5km" />
+												<rotation pitch="$Pitch" yaw="$Yaw" roll="$Roll" />
+											</create_object>
+
+											<set_object_hull object="$AsteroidSubObj" min="70 + stat.trade_rank" max="100 + stat.trade_rank" />
+
+											<add_to_group groupname="$AsteroidCluster" object="$AsteroidSubObj"/>
+											<do_if value="$AsteroidSubObj.size gt $AsteroidMaxSize">
+												<set_value name="$AsteroidMaxSize" exact="$AsteroidSubObj.size" />
+											</do_if>
+
+											<set_value name="$ClusterTotalWidth" exact="$ClusterTotalWidth + $AsteroidCluster.{$Roid}.size" />
+											<set_value name="$AsteroidMineFactor" exact="$AsteroidMineFactor + $AsteroidCluster.{$Roid}.size/2000" />
+
+											<append_to_list name="$AsteroidWareList" exact="$AsteroidWare"/>
+
+										</do_all>
+
+										<set_value name="$AsteroidAvgSize" exact="($ClusterTotalWidth/$AsteroidCluster.count)i" />
+
+										<do_if value="$AsteroidMaxSize lt 550m">
+											<set_value name="$EncounterSizeFactor" exact="(100*[0.1,($AsteroidMaxSize/1500m)].max)i/100.0" />
+											<set_value name="$AsteroidDistance" exact="(150 * $AsteroidMaxSize)i" />
+										</do_if>
+										<do_else>
+											<set_value name="$EncounterSizeFactor" exact="(100*[1.0,($AsteroidMaxSize/1500m)].min)/100.0" />
+											<set_value name="$AsteroidDistance" exact="if $AsteroidMaxSize lt 2600m then ([110km, (60 * $AsteroidMaxSize)i].min)i else ([110km,(35 * $AsteroidMaxSize)i].min)i" />
+										</do_else>
+
+										<set_value name="$AsteroidYieldUplift" exact="1+((stat.trade_rank + ($SectorCenterDistance / player.sector.coresize))/100)"/>
+										<set_value name="$ClusterAnchor" min="1" max="$AsteroidCluster.count" profile="decreasing" scale="2" />
+										<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Roids   : Anchor = %s (Largest Asteroid %sm Average Size %sm SizeFactor %s Yield Uplift +%s%% Warp %skm/%skm )'.[(player.age)i, $ClusterAnchor, ($AsteroidMaxSize)i, $AsteroidAvgSize, (100*$EncounterSizeFactor)i/100.0, ((100*$AsteroidYieldUplift)-100)i, ([ $AsteroidDistance, player.ship.maxradarrange * 1.2 ].max/1km)i, (([ $AsteroidDistance, player.ship.maxradarrange * 1.3 ].max + ($EncounterSizeFactor * $AsteroidAvgSize))/1km)i ]" output="true" append="true" />
+
+										<!-- <set_value name="$EncounterSizeFactor" exact="[0.7, [sqrt($AsteroidSubObj.size)/45,0.1].max].min" /> -->
+
+										<do_all exact="$AsteroidCluster.count" counter="$Roid">
+
+											<do_if value="$AsteroidCluster.{$Roid}.exists">
+
+												<set_value name="$AsteroidSubObj" exact="$AsteroidCluster.{$Roid}" />
+
+												<do_if value="$Roid == 1">
+													<set_value name="$X2" min="$X" max="$X * $EncounterSizeFactor" />
+													<set_value name="$Y2" min="$Y" max="$Y * $EncounterSizeFactor" />
+													<set_value name="$Z2" min="[ $AsteroidDistance, player.ship.maxradarrange * 1.2 ].max" max="[ $AsteroidDistance, player.ship.maxradarrange * 1.3 ].max + ($EncounterSizeFactor * $AsteroidAvgSize)" />
+													<create_position name="$AsteroidPosition" object="player.ship" x="$X2" y="$Y2" z="$Z2" space="player.sector"/>
+												</do_if>
+
+												<do_if value="$Roid == $ClusterAnchor">
+													<set_value name="$EncounterAnchor" exact="$AsteroidSubObj" />
+													<set_value name="$EncounterPosition" exact="$AsteroidPosition" />
+												</do_if>
+
+												<set_value name="$AsteroidSpacing" min="1km" max="3km" profile="decreasing" scale="2" />
+												<set_value name="$AsteroidSpacing" exact="$AsteroidSpacing + ( 0.75 * (sqrt($Roid)-1) * $EncounterSizeFactor * $EncounterSizeFactor * $AsteroidAvgSize)" />
+
+												<warp object="$AsteroidSubObj" sector="player.sector">
+													<safepos value="$AsteroidPosition" radius="if ( $Roid == $ClusterAnchor or $AsteroidSubObj.isclass.asteroid ) then $AsteroidSpacing else [ 0.8 * $AsteroidSubObj.size, $AsteroidSubObj.size, $AsteroidSubObj.size, 2 * $AsteroidSubObj.size].random" />
+												</warp>
+
+												<set_value name="$AsteroidWareID" exact="[tag.ore,tag.ice,tag.silicon,tag.crystals,tag.nividium].indexof.{$AsteroidWareList.{$Roid}}" />
+												<set_value name="$AsteroidWare" exact="[ware.ore,ware.ice,ware.silicon,ware.silicon,ware.nividium].{$AsteroidWareID}" />
+
+												<!-- <debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Roids   : # %s Roid Macro (%s/%s)'.[(player.age)i, $Roid, $AsteroidSubObj.macro, $AsteroidSubObj.class ]" output="true" append="true" /> -->
+												<do_if value="$AsteroidSubObj.isclass.asteroid">
+													<do_if value="true" chance="$AsteroidWareChance">
+														<set_value name="$AsteroidYield" min="$AsteroidSubObj.size/4" max="$AsteroidSubObj.size/2" />
+														<set_value name="$AsteroidYield" exact="$AsteroidYieldUplift * $AsteroidYield" />
+														<set_value name="$AsteroidYieldTotal" exact="$AsteroidYieldTotal + $AsteroidYield" />
+														<add_cargo object="$AsteroidSubObj" ware="$AsteroidWare" exact="$AsteroidYield" />
+													</do_if>
+													<do_else>
+														<set_value name="$AsteroidYield" exact="0" />
+													</do_else>
+													<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Roids   : # %s Roid #%s %s x %s (%s/%sm) @ %sm '.[(player.age)i, $Roid, $AsteroidWareID, ($AsteroidYield)i, $AsteroidWare, $AsteroidSubObj.macro, ($AsteroidSubObj.size)i, ($AsteroidSpacing + ( 0.75 * (sqrt($Roid)-1) * $EncounterSizeFactor * $AsteroidAvgSize))i, ($AsteroidSpacing)i ]" output="true" append="true" />
+												</do_if>
+												<do_else>
+													<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Roids   : # %s Object (%s/%sm) @ %sm '.[(player.age)i, $Roid, $AsteroidSubObj.macro, ($AsteroidSubObj.size)i, ($AsteroidSpacing)i ]" output="true" append="true" />
+												</do_else>
+
+
+											</do_if>
+
+										</do_all>
+
+										<clear_group group="$AsteroidCluster"/>
+										<clear_list list="$AsteroidWareList"/>
+
+										<!-- </do_all> -->
+
+										<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Roids   : Asteroid Debris %s%% LockBox %s%% Crates %s%% Mines %s%% Probes %s%% Anchor %s'.[(player.age)i, (Manager.$EncWreckChance * $AsteroidAvgSize/1000)i, (Manager.$EncLockBoxChance/2)i, (Manager.$EncCrateChance)i, ([Manager.$EncMinesChance * $AsteroidMineFactor, $AsteroidAvgSize/2000].max)i, (if ($AsteroidYieldTotal / $AsteroidsMaxSpawn) lt 250 then $AsteroidsMaxSpawn else [ ($AsteroidYieldTotal / ($AsteroidsMaxSpawn*100)), Manager.$EncProbeChance ].max )i, $EncounterAnchor ]" output="true" append="true" />
+										<signal_cue_instantly cue="EncounterCreateDebris" chance="Manager.$EncWreckChance * $AsteroidAvgSize/1000"/>
+										<signal_cue_instantly cue="EncounterCreateLockBox" chance="Manager.$EncLockBoxChance / 2" />
+										<signal_cue_instantly cue="EncounterCreateCrates" chance="Manager.$EncCrateChance" />
+										<signal_cue_instantly cue="EncounterCreateMineField" chance="[Manager.$EncMinesChance * $AsteroidMineFactor, $AsteroidAvgSize/2000].max" param="if $AsteroidsMaxSpawn lt 3 then null else $ClusterTotalWidth" />
+										<signal_cue_instantly cue="EncounterCreateProbes" chance="if ($AsteroidYieldTotal / $AsteroidsMaxSpawn) lt 250 then $AsteroidsMaxSpawn else [ ($AsteroidYieldTotal / ($AsteroidsMaxSpawn*100)), Manager.$EncProbeChance ].max" />
+
+									</do_if>
+
+									<!-- DEBRIS -->
+									<do_elseif value="$EncounterType == tag.wreck">
+										<include_actions ref="EncounterSetFaction" />
+										<signal_cue_instantly cue="EncounterCreateDebris" />
+									</do_elseif>
+
+									<!-- PROBES -->
+									<do_elseif value="$EncounterType == tag.probe">
+										<include_actions ref="EncounterSetFaction" />
+										<signal_cue_instantly cue="EncounterCreateProbes" />
+									</do_elseif>
+
+									<!-- MINES -->
+									<do_elseif value="[ tag.defencegrid, tag.minefield ].indexof.{$EncounterType} != 0">
+										<include_actions ref="EncounterSetFaction" />
+										<set_value name="$EncounterClassTag" exact="if $EncounterType == tag.defencegrid then tag.military else tag.criminal" />
+										<signal_cue_instantly cue="EncounterCreateMineField" />
+									</do_elseif>
+
+									<!-- CRATES & CONTAINERS -->
+									<do_elseif value="$EncounterType == tag.crate">
+										<include_actions ref="EncounterSetFaction" />
+										<include_actions ref="EncounterSetClassType" />
+										<set_value name="$EncounterSizeFactor" exact="player.ship.distanceto.{player.sector}/(10 * player.sector.coresize)" />
+										<signal_cue_instantly cue="EncounterCreateCrates" />
+									</do_elseif>
+
+									<!-- LOCKBOXES -->
+									<do_elseif value="$EncounterType == tag.lockbox">
+										<signal_cue_instantly cue="EncounterCreateLockBox" />
+									</do_elseif>
+
+									<!-- DRIFTING SHIPS (Salvage) -->
+									<do_elseif value="$EncounterType == tag.salvage">
+
+										<include_actions ref="EncounterSetFaction" />
+
+										<do_if value="not $EncounterFaction? and $EncounterFactionList.count != 0">
+											<set_value name="$EncounterFaction" exact="$EncounterFactionList.random" />
+										</do_if>
+
+										<set_value name="$CombinedRank" exact="stat.fight_rank + stat.trade_rank" />
+										<set_value name="$SalvageLoadout" min="[0.004,$CombinedRank/250.0].max" max="[1,0.01,$CombinedRank/100.0].max" />
+										<set_value name="$SalvageHealth" exact="70 * $SectorDeepSpaceValue / $SectorCenterDistance" />
+
+										<!-- Set ship tag selection to be a trader or military (if Khaak or Xenon) -->
+										<do_any>
+											<set_value name="$EncounterClassTag" exact="tag.military" weight="[ 1, stat.fight_rank/3 ].max" />
+											<set_value name="$EncounterClassTag" exact="tag.trader" weight="if [ faction.buccaneers, faction.khaak, faction.xenon ].indexof.{$EncounterFaction} == 0 then  [ 1, stat.trade_rank ].max     else 0" />
+											<set_value name="$EncounterClassTag" exact="tag.miner" weight="if [ faction.buccaneers, faction.khaak                ].indexof.{$EncounterFaction} == 0 then ([ 1, stat.trade_rank ].max/5)i else 0" />
+										</do_any>
+										<!-- Set ship class size -->
+										<do_any>
+											<set_value name="$EncounterSalvageClass" exact="class.ship_s" weight="[ 0, 35 -  ( 1 * $CombinedRank )  ].max" />
+											<set_value name="$EncounterSalvageClass" exact="class.ship_m" weight="[ 0, 14 -  ( $CombinedRank / 5 )  ].max" />
+											<set_value name="$EncounterSalvageClass" exact="class.ship_l" weight="if [ faction.khaak, faction.xenon ].indexof.{$EncounterFaction} == 0 then [ 0, $CombinedRank/10 ].max else 0" />
+											<set_value name="$EncounterSalvageClass" exact="class.ship_xl" weight="if $EncounterClassTag == tag.military and [ faction.khaak ].indexof.{$EncounterFaction} == 0 then [ 0, 0.1+($CombinedRank/15) ].max else 0" />
+										</do_any>
+
+										<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Drift   : s/m/l/xl %s/%s/%s/%s '.[(player.age)i, [ 0, 35 -  ( 1 * $CombinedRank )  ].max, [ 0, 14 -  ( $CombinedRank / 5 )  ].max, [ 0, $CombinedRank/10 ].max, [ 0, 0.1+($CombinedRank/15) ].max ]" output="true" append="true" />
+
+										<do_if value="$EncounterClassTag == tag.trader and $ResourceDist lt (26km * $EncounterFilter)">
+											<set_value name="$EncounterClassTag" exact="tag.miner" chance="40" />
+										</do_if>
+
+										<!-- md.$EquipmentTable.{faction.argon}.random -->
+										<!-- <get_ship_definition reference="$EncounterSalvageDef" size="$EncounterSalvageClass" faction="$EncounterFaction" tags="$EncounterClassTag" /> -->
+										<get_ship_definition macro="$EncounterObjMacro" faction="$EncounterFaction" size="$EncounterSalvageClass" tags="$EncounterClassTag" />
+
+										<do_if value="$EncounterClassTag == tag.trader">
+											<set_value name="$EncounterSalvageCargoTypes" exact="['agricultural','energy','food','hightech','pharmaceutical','refined','shiptech','weapontech']" />
+										</do_if>
+										<do_elseif value="$EncounterClassTag == tag.miner">
+											<set_value name="$EncounterSalvageCargoTypes" exact="['gases','minerals','water','ice']" />
+											<do_if value="$EncounterFaction == faction.xenon">
+												<set_value name="$EncounterSalvageClass" exact="class.ship_m" />
+											</do_if>
+										</do_elseif>
+										<do_elseif value="$EncounterClassTag == tag.military">
+											<set_value name="$EncounterSalvageCargoTypes" exact="['missiles','countermeasures']" />
+										</do_elseif>
+										<do_elseif value="$EncounterClassTag == tag.criminal">
+											<set_value name="$EncounterSalvageCargoTypes" exact="['pharmaceutical']" />
+										</do_elseif>
+										<!-- Do Ware list loop here -->
+										<set_value name="$EncounterSalvageClassIDX" exact="[ class.ship_s, class.ship_m, class.ship_l, class.ship_xl ].indexof.{$EncounterSalvageClass}" />
+										<set_value name="$EncounterSalvageCargoTypesMax" min="1" max="2 * $EncounterSalvageClassIDX" />
+
+										<create_list name="$EncounterSalvageCargoList" />
+										<do_all exact="$EncounterSalvageCargoTypesMax" counter="$ware">
+											<get_ware_definition result="$EncounterSalvageCargoWare" faction="$EncounterFaction" group="$EncounterSalvageCargoTypes.random"/>
+											<do_if value="$EncounterSalvageCargoWare.count">
+												<append_to_list name="$EncounterSalvageCargoList" exact="$EncounterSalvageCargoWare.random" />
+											</do_if>
+										</do_all>
+
+										<set_value name="$EncounterFaction" exact="faction.ownerless" chance="if not $EncounterFaction? then 100 else [ 0, 100-(2 * $EncounterSalvageClassIDX * $SalvageHealth)].max"/>
+										<set_value name="$EncounterMineChance" exact="[ 15, 1.5 * Manager.$EncWreckChance * $EncounterSalvageClassIDX * [ tag.miner, tag.trader, tag.military ].indexof.{$EncounterClassTag} ].max" />
+										<set_value name="$EncounterProbeChance" exact="(10 * $EncounterSalvageClassIDX * player.sector.security * player.sector.coresize / player.ship.distanceto.{player.sector})i" />
+
+										<create_ship name="$EncounterAnchor" macro="$EncounterObjMacro" sector="player.sector" capturable="true" commandeerable="false" mission="false">
+											<owner exact="$EncounterFaction"/>
+											<people>
+												<fillpercent exact="0"/>
+											</people>
+											<pilot actor="null" />
+											<loadout>
+												<level max="$SalvageLoadout"/>
+												<variation exact="0"/>
+											</loadout>
+											<cargo>
+												<wares list="$EncounterSalvageCargoList" multiple="true">
+													<fillpercent max="$SalvageLoadout * 150" profile="bell" />
+												</wares>
+											</cargo>
+											<!--
+											<ammo>
+												<fillpercent max="$SalvageHealth"/>
+											</ammo>
+											-->
+											<safepos object="player.ship" x="0m" y="0m" z="150km"/>
+										</create_ship>
+
+										<!-- Do  damage to hull plus (may be) destroy some ship major components -->
+										<set_object_hull object="$EncounterAnchor" min="10 + stat.fight_rank/3" max="20 + stat.fight_rank/3 + (2 * $SalvageHealth)i" profile="decreasing" scale="2" />
+
+										<!-- <set_object_shield object="$EncounterAnchor" min="10 + stat.fight_rank  " max="20 + stat.fight_rank   + (2 * $SalvageHealth)i" profile="decreasing" scale="4" /> -->
+
+										<!-- With greater skill & distances into deepspace, reduce the chance of damage to ship components  -->
+										<set_value name="$DamageChance" exact="[10, player.sector.security * ( 80 - $CombinedRank - ($SectorCenterDistance / $SectorDeepSpaceValue))].max" />
+
+										<set_value name="$ElementClassList" exact="[ [class.weapon, 1.0], [class.engine,1.1], [class.shieldgenerator,1.2], [class.turret,1.3] ]" />
+										<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Drift   : %s %s/%s (%s) Size/Hull %sm/%s%% Health/LoadOut/Damage %s/%s/%s%% Probe/Mine %s%%/%s%% (%s) [%s, %s, %s]'.[(player.age)i, @$EncounterAnchor.knownname, $EncounterClassTag, $EncounterSalvageClass, $EncounterObjMacro, ($EncounterAnchor.size)i, ($EncounterAnchor.hullpercentage)i, ($SalvageHealth)i, (100*$SalvageLoadout)i/100f, ($DamageChance)i, $EncounterProbeChance, $EncounterMineChance, @$EncounterFaction, ($X/10)i/100f, ($Y/10)i/100f, ($Z/10)i/100f ]" output="true" append="true" />
+										<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Drift   : Salvage Cargo %s'.[(player.age)i, $EncounterSalvageCargoList ]" output="true" append="true" />
+
+										<do_all exact="$ElementClassList.count" counter="$element">
+											<find_object_component name="$ElementList" object="$EncounterAnchor" class="$ElementClassList.{$element}.{1}" multiple="true"/>
+											<do_for_each name="$ElementToDamage" in="$ElementList">
+												<do_all chance="$DamageChance * $ElementClassList.{$element}.{2}">
+													<destroy_object object="$ElementToDamage" explosion="true" />
+													<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Drift   : Removed %s'.[(player.age)i, $ElementToDamage.name ]" output="true" append="true" />
+												</do_all>
+											</do_for_each>
+										</do_all>
+
+										<include_actions ref="EncounterSetPitchYawRoll"/>
+
+										<warp object="$EncounterAnchor" sector="player.sector">
+											<safepos value="$EncounterPosition" />
+											<rotation pitch="$Pitch" yaw="$Yaw" roll="$Roll" />
+										</warp>
+
+										<signal_cue_instantly cue="EncounterCreateMineField" chance="$EncounterMineChance" />
+										<signal_cue_instantly cue="EncounterCreateProbes" chance="$EncounterProbeChance" />
+
+									</do_elseif>
+
+									<!-- RARE STUFF (Anomalies, very large objects &  weird stuff (only at > sector size (~300km)) -->
+									<do_elseif value="$EncounterType == tag.rare">
+
+										<do_all chance="100">											<!-- -(0.75*player.sector.size^2/player.ship.distanceto.{player.sector})"> -->
+
+											<include_actions ref="EncounterSetFaction" />
+											<include_actions ref="EncounterSetClassType" />
+
+											<set_value name="$EncounterFaction" exact="faction.ownerless" />
+
+											<do_any>
+												<!-- Asteroids -->
+												<do_all weight="45">
+													<set_value name="$EncounterSizeFactor" exact="1.5" />
+													<set_value name="$EncounterObjMacro" exact="[ macro.env_ast_crystal_m_01_tes_macro, macro.env_ast_niv_m_01_tes_macro, macro.asteroid_turret_m_01_macro, macro.env_ast_ore_m_01_tes_macro, macro.env_ast_ore_m_explosive_03_macro ].random" />
+													<do_if value="$EncounterObjMacro == macro.asteroid_turret_m_01_macro">
+														<append_to_list name="$EncounterFactionList" exact="[ faction.xenon, faction.xenon ]"/>
+													</do_if>
+													<set_value name="$EncounterFaction" exact="$EncounterFactionList.random" chance="100 * player.sector.security * player.sector.coresize / player.ship.distanceto.{player.sector}" />
+												</do_all>
+
+												<!-- Large Wrecks -->
+												<do_all weight="20">
+													<set_value name="$EncounterSizeFactor" exact="0.5" />
+													<set_value name="$EncounterObjMacro" exact="[ macro.landmarks_gen_exploration_01_macro ].random" />
+													<set_value name="$EncounterFaction" exact="$EncounterFactionList.random" chance="100 * player.sector.security * player.sector.coresize / player.ship.distanceto.{player.sector}" />
+												</do_all>
+
+												<!-- Khaak Structures-->
+												<do_all weight="if player.sector.owner == faction.khaak then 30 else 10">
+													<set_value name="$EncounterSizeFactor" exact="0.5" />
+													<do_any>
+														<set_value name="$EncounterObjMacro" exact="[ macro.landmarks_kha_weaponplatform_01_macro ].random" weight="98" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.landmarks_kha_hive_01_macro ].random" weight="2" />
+													</do_any>
+													<set_value name="$EncounterFaction" exact="faction.khaak" />
+												</do_all>
+
+												<!-- Data Vaults / Deepspace Stations -->
+												<do_all weight="10">
+													<set_value name="$EncounterSizeFactor" exact="1.0" />
+													<set_value name="$EncounterObjMacro" exact="[ macro.landmarks_vault_01_macro, macro.landmarks_vault_02_macro, macro.landmarks_vault_03_macro, macro.landmarks_vault_04_macro ].random" />
+													<set_value name="$EncounterFaction" exact="$EncounterFactionList.random" chance="100 * player.sector.security * player.sector.coresize / player.ship.distanceto.{player.sector}" />
+													<include_actions ref="EncounterCreateName" />
+													<set_value name="$EncounterNameIndex" min="1" max="99" />
+													<set_value name="$EncounterObjName" exact="$EncounterNameSLabs + ['Lab','Station','Station'].random + ' ' + $EncounterNameType1 + $EncounterNameIndex" />
+												</do_all>
+
+												<!-- XXL Curly Asteroids -->
+												<do_all weight="5">
+													<set_value name="$EncounterSizeFactor" exact="2.0" />
+													<set_value name="$EncounterObjMacro" exact="[ macro.asteroid_special_lm_01_macro, macro.env_asteroid_special_01_macro, macro.env_asteroid_special_02_macro ].random" />
+												</do_all>
+
+												<!-- XXL Landmarks -->
+												<do_all weight="3">
+													<set_value name="$EncounterSizeFactor" exact="1.5" />
+													<set_value name="$EncounterObjMacro" exact="[ macro.landmarks_xen_aqueduct_01_macro, macro.landmarks_xen_aqueduct_02_macro, macro.landmarks_xen_aqueduct_03_macro, macro.landmarks_xen_aqueduct_04_macro, macro.landmarks_xen_aqueduct_05_macro, macro.landmarks_xen_aqueduct_06_macro, macro.landmarks_xen_aqueduct_07_macro ].random" />
+													<include_actions ref="EncounterCreateName" />
+													<set_value name="$EncounterNameIndex" min="1" max="9" />
+													<set_value name="$EncounterObjName" exact="['Aqueduct', 'Extraction Plant', 'Filtration Plant', 'Reservoir' ].random + ' ' + $EncounterNameType3 + $EncounterNameIndex" />
+													<set_value name="$EncounterFaction" exact="$EncounterFactionList.random" chance="100 * player.sector.security * player.sector.coresize / player.ship.distanceto.{player.sector}" />
+												</do_all>
+
+												<!-- Xenon structures -->
+												<do_all weight="if player.sector.owner == faction.xenon then 4 else 2">
+													<set_value name="$EncounterSizeFactor" exact="1.5" />
+													<do_any>
+														<set_value name="$EncounterObjMacro" exact="[ macro.xenon_asteroid_01_base_01_macro, macro.xenon_asteroid_02_base_02_macro ].random" weight="80" />
+														<set_value name="$EncounterObjMacro" exact="[ macro.xenon_small_solarpowerplant_01_macro, macro.xenon_small_station_01_macro].random" weight="20" />
+													</do_any>
+													<set_value name="$EncounterFaction" exact="faction.xenon" />
+													<set_value name="$EncounterClassTag" exact="tag.xenon" />
+												</do_all>
+
+												<!-- Argon/Antigone/Hatikvah structures -->
+												<do_all weight="if [ faction.argon, faction.antigone, faction.hatikvah ].indexof.{player.sector.owner} == 0 then 0 else 4">
+													<set_value name="$EncounterSizeFactor" exact="1.0" />
+													<set_value name="$EncounterObjMacro" exact="[ macro.landmarks_gen_old_ringstation_macro ].random" />
+													<set_value name="$EncounterFaction" exact="player.sector.owner" />
+												</do_all>
+
+												<!-- Paranid structures -->
+												<do_all weight="if player.sector.owner == faction.paranid then 4 else 0">
+													<set_value name="$EncounterSizeFactor" exact="1.0" />
+													<set_value name="$EncounterObjMacro" exact="[ macro.landmarks_par_monument_01_macro ].random" />
+													<set_value name="$EncounterFaction" exact="faction.paranid" />
+												</do_all>
+
+												<!-- Mass Traffic Units -->
+												<!-- <set_value name="$EncounterSizeFactor" exact="0.5" /> -->
+												<!-- set_value name="$EncounterObjMacro" exact="[ macro.masstraffic_station_01_macro, macro.masstraffic_station_02_macro, macro.masstraffic_station_03_macro].random"	-->
+											</do_any>
+
+											<!-- Create object out of view first so we can set stuff up before it is brought into play and find out how big it is -->
+											<create_object name="$EncounterAnchor" macro="$EncounterObjMacro" sector="player.sector" owner="$EncounterFaction">
+												<safepos object="player.ship" x="0m" y="0m" z="150km"/>
+											</create_object>
+											<set_object_hull object="$EncounterAnchor" min="70 + stat.fight_rank" max="100 + stat.fight_rank" profile="decreasing" scale="2" />
+											<do_if value="$EncounterObjName?">
+												<set_object_name object="$EncounterAnchor" name="$EncounterObjName" />
+											</do_if>
+
+											<!-- Adjust final position depending on size of encounter object -->
+											<set_value name="$X2" exact="$X * $Z/150km" />
+											<set_value name="$Y2" exact="$Y * $Z/150km" />
+
+											<set_value name="$Z2" min="[ 49km, player.ship.maxradarrange ].max" max="[  51km, player.ship.maxradarrange * 1.2 ].max" />
+											<set_value name="$Z2" min="68km" max="[  73km, player.ship.maxradarrange * 1.2 ].max" chance="if ($EncounterAnchor.size ge  500) then 100 else 0"/>
+											<set_value name="$Z2" min="127km" max="[ 135km, player.ship.maxradarrange * 1.2 ].max" chance="if ($EncounterAnchor.size ge 1000) then 100 else 0"/>
+
+											<create_position name="$EncounterPosition" object="player.ship" x="$X2" y="$Y2" z="$Z2" space="player.sector"/>
+
+											<include_actions ref="EncounterSetPitchYawRoll"/>
+
+											<warp object="$EncounterAnchor" sector="player.sector">
+												<safepos value="$EncounterPosition" />
+												<rotation pitch="$Pitch" yaw="$Yaw" roll="$Roll" />
+											</warp>
+
+											<set_value name="$EncounterCrateChance" exact="[ 0, (135 - 5 * Manager.$EncWreckChance)i ].max" />
+											<set_value name="$EncounterProbeChance" exact="(100 * player.sector.security * player.sector.coresize / player.ship.distanceto.{player.sector})i" />
+
+											<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Rare    : Misc %s Size/Hull = %sm/%s (Probe %s/%s%% Crate %s%%) [%s, %s, %s]'.[(player.age)i, $EncounterObjMacro, ($EncounterAnchor.size)i, ($EncounterAnchor.hull)i, [1,[5,($EncounterAnchor.size/3km)i].min].max, $EncounterProbeChance, $EncounterCrateChance, ($X2/10)i/100f, ($Y2/10)i/100f, ($Z2/10)i/100f ]" output="true" append="true" />
+
+											<signal_cue_instantly cue="EncounterCreateLockBox" chance="$EncounterCrateChance / 2" />
+											<signal_cue_instantly cue="EncounterCreateCrates" chance="$EncounterCrateChance" param="$EncounterSizeFactor" />
+											<signal_cue_instantly cue="EncounterCreateMineField" chance="Manager.$EncMinesChance" />
+											<signal_cue_instantly cue="EncounterCreateProbes" chance="$EncounterProbeChance" />
+
+										</do_all>
+
+									</do_elseif>
+								</do_if>
+
+								<!-- Now generate the main encounter if it passes the various filter tests -->
+
+								<!--Semi-HACK @Owen @Matthias - Do not warp docked ships as the flight controller may not be correctly updated and the dock remains the flight context. May also cause other problems e.g. dock connections? -->
+								<do_if value="$LeadShip.parent.isclass.zone" chance="Manager.$EncounterVesselChance">
+									<!--Ship is far enough away to allow warping and is not in a critical state and not owned/captured by the player-->
+									<do_if value="($LeadShip.sector != player.sector or $LeadShip.distanceto.{player.entity} gt 200km) and $LeadShip.order.state != orderstate.critical and $LeadShip.owner != faction.player">
+										<!--Player is not in a Xenon sector-->
+										<do_if value="player.sector.owner != faction.xenon or ['xenon_s_lone','xenon_s_group','hostile_taskforce','khaak_s_lone','khaak_s_group','khaak_s_group','khaak_swarm' ].indexof.{$LeadShip.encounterid} != 0 ">
+											<do_if value="[ 'lone_plunderer', 'plunderer_group' ].indexof.{$LeadShip.encounterid} != 0 ">
+												<do_if value="true" chance="(1.0f - (player.sector.security / $EncounterFilter )) * 100">
+													<set_value name="$TriggerEncounter" exact="true" />
+													<break/>
+												</do_if>
+											</do_if>
+
+											<do_elseif value="[ 'resource_scout', 'lone_miner', 'mining_group_small', 'mining_group_large' ].indexof.{$LeadShip.encounterid} != 0 ">
+												<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Miner   : %s LeadShip has ware list of %s'.[(player.age)i, @$LeadShip.idcode, $LeadShip.warebasket.list ]" output="true" append="true" />
+
+												<find_closest_resource refobject="player.ship" sector="$ResourceSector" ware="$LeadShip.warebasket.list" position="$ResourcePos" distance="$ResourceDist">
+													<refposition object="player.ship" />
+												</find_closest_resource>
+												<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Check   : %s Resource/trigger distance is %skm/%skm (%s)'.[(player.age)i, @$LeadShip.idcode, ($ResourceDist/1km)i, (13km * $EncounterFilter/1km)i, @$LeadShip.encounterid ]" output="true" append="true" />
+												<do_if value="$ResourceDist lt (13km * $EncounterFilter) ">
+													<set_value name="$TriggerEncounter" exact="true"/>
+													<break/>
+												</do_if>
+											</do_elseif>
+											<do_else>
+												<do_if value="true" chance="(1.0f - (player.sector.security / $EncounterFilter )) * 100">
+													<!-- <debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Check   : %s #%s Sector security is %s, chance is %s%%'.[(player.age)i, @$LeadShip.idcode, Manager.$EncounterInstances, player.sector.security, (1.0f - (player.sector.security / $EncounterFilter )) * 100 ]" output="true" append="true" /> -->
+													<set_value name="$TriggerEncounter" exact="true"/>
+												</do_if>
+											</do_else>
+										</do_if>
+									</do_if>
+								</do_if>
+							</do_if>
+
+							<do_if value="$TriggerEncounter">
+								<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Warp    : # %s %s Warping %s and subordinates to [%s, %s, %s]'.[(player.age)i, Manager.$EncounterInstances, @$LeadShip.idcode, @$LeadShip.knownname, ($X/10)i/100f, ($Y/10)i/100f, ($Z/10)i/100f ]" output="true" append="true" />
+
+								<!-- Check to see if warping of encounter ships is enabled or not... useful for debug when wanting a more peaceful deepspace!! -->
+								<do_if value="Manager.$EnableShipEncounters">
+									<cancel_all_orders object="$LeadShip"/>
+									<warp object="$LeadShip" sector="player.sector">
+										<safepos value="$EncounterPosition"/>
+									</warp>
+									<set_value name="$Subordinates" exact="$LeadShip.subordinates"/>
+									<do_all exact="$Subordinates.count" counter="$i">
+										<set_value name="$Subordinate" exact="$Subordinates.{$i}"/>
+										<do_if value="($Subordinate.sector == $LeadShip.sector or $Subordinate.distanceto.{$LeadShip} lt 50km) and $Subordinate.parent.isclass.space and $LeadShip.order.state != orderstate.critical">
+											<append_to_list name="$WarpedSubordinates" exact="$Subordinate"/>
+											<cancel_all_orders object="$Subordinates.{$i}"/>
+											<warp object="$Subordinates.{$i}" sector="player.sector">
+												<safepos value="$EncounterPosition"/>
+											</warp>
+										</do_if>
+									</do_all>
+								</do_if>
+
+								<set_value name="Manager.$EncounterInstances" operation="add"/>
+							</do_if>
+							<do_else>
+								<cancel_cue cue="this"/>
+							</do_else>
+
+						</actions>
+
+						<cues>
+							<cue name="DeepSpace_Vessel_Encounter">
+								<conditions>
+									<event_cue_completed cue="DeepSpace_Generate_Encounters"/>
+								</conditions>
+								<cues>
+									<cue name="DeepSpace_Encounter_Warp">
+										<delay exact="1ms"/>
+										<actions>
+											<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Event   : %s Encounter with %s (%s)'.[(player.age)i, $LeadShip.idcode, $LeadShip.knownname, $LeadShip.encounterid, $LeadShip.knownname ]" output="true" append="true" />
+											<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Event   : %s Min/Max (%s/%s) Fight %s/%s (s/r) BoostAttack? %s%% '.[(player.age)i, @$LeadShip.idcode, [1, (stat.fight_rank/3)].max, [1, 1+(stat.fight_rank/2)].max, stat.fight_score, stat.fight_rank, 10 + 3 * stat.trade_rank ]" output="true" append="true" />
+											<do_if value="$LeadShip.encounterid == 'lone_plunderer'">
+												<do_if value="player.ship" chance="10 + 3 * stat.trade_rank">
+													<!-- small chance that bandits just attack -->
+													<set_value name="$boostandattack"/>
+												</do_if>
+												<do_elseif value="@$LeadShip.order.id == 'Plunder'">
+													<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Plunderer %s %s %s current order: %s'.[(player.age)i, $LeadShip.idcode, $LeadShip.knownname, $LeadShip, $LeadShip.order.id]" chance="$DebugChance"/>
+
+													<!-- NB: plunderers will ignore you if you're not carrying any cargo. -->
+													<edit_order_param order="$LeadShip.order" param="'space'" value="player.sector"/>
+													<edit_order_param order="$LeadShip.order" param="'range_internal'" value="null"/>
+													<edit_order_param order="$LeadShip.order" param="'deepspace'" value="false"/>
+													<edit_order_param order="$LeadShip.order" param="'debugchance'" value="$DebugChance"/>
+													<signal_objects object="$LeadShip" param="'exploration_stayput'" delay="500ms"/>
+													<!-- <debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Order : %s Leadship running plunder order, restarting the order script, targetzone: %s %s, space: %s %s, current zone: %s range_internal: %s'.[(player.age)i, @$LeadShip.idcode, @$LeadShip.order.$targetzone.class, @$LeadShip.order.$targetzone, $LeadShip.order.$space.class, $LeadShip.order.$space, $LeadShip.zone, $LeadShip.order.$range_internal]" output="false" append="true" /> -->
+												</do_elseif>
+												<do_else>
+													<set_value name="$boostandattack"/>
+													<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Fight   : %s Continuing LeadShip %s order: %s (continues)'.[(player.age)i, @$LeadShip.idcode, $LeadShip.knownname, $LeadShip.order.id]" output="false" append="true" />
+												</do_else>
+
+												<do_if value="$boostandattack?">
+													<remove_value name="$boostandattack"/>
+													<add_relation_boost object="$LeadShip" otherobject="player.ship" value="$LeadShip.owner.relation.kill.max" decay="1" delay="10min" silent="true"/>
+													<create_order object="$LeadShip" id="'Attack'" immediate="true">
+														<param name="primarytarget" value="player.ship"/>
+														<param name="pursuetargets" value="true"/>
+														<param name="debugchance" value="$DebugChance"/>
+														<param name="escort" value="if $LeadShip.isformationwingman then $LeadShip.commander else null" comment="no error if there is no commander" />
+														<param name="squad_attack" value="true"/>
+														<param name="internalorder" value="true"/>
+														<param name="allowothertargets" value="true" />
+													</create_order>
+													<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Fight   : %s %s set to attack %s %s %s.'.[(player.age)i, @$LeadShip.idcode, $LeadShip.knownname, player.ship.idcode, player.ship.knownname, player.ship.name]" output="true" append="true" />
+												</do_if>
+											</do_if>
+
+											<do_elseif value="$LeadShip.encounterid == 'resource_scout' ">
+												<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Resource Scout %s %s %s current order: %s'.[(player.age)i, $LeadShip.idcode, $LeadShip.knownname, $LeadShip, $LeadShip.order.id]" output="true" append="true" />
+												<do_if value="$LeadShip.order.id == 'MiningRoutine' and $LeadShip.order.$resourcescout">
+													<!-- this will restart the order -->
+													<edit_order_param order="$LeadShip.order" param="'range'" value="$LeadShip.sector"/>
+												</do_if>
+												<do_else>
+													<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 %s Order %s %s is not running MiningRoutine. current order ID: %s. creating new immediate order.'.[(player.age)i, @$LeadShip.idcode, $LeadShip.knownname, $LeadShip, $LeadShip.order.id]" output="true" append="true" />
+													<create_order id="'MiningRoutine'" object="$LeadShip" immediate="true">
+														<param name="range" value="$LeadShip.sector"/>
+														<param name="deepspace" value="true"/>
+														<param name="resourcescout" value="true"/>
+													</create_order>
+												</do_else>
+												<do_all>
+													<activate_job_ship_orders ship="$LeadShip"/>
+												</do_all>
+											</do_elseif>
+
+											<do_elseif value="['lone_miner', 'mining_group_small', 'mining_group_large'].indexof.{$LeadShip.encounterid} != 0">
+												<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Mining Ships %s %s %s current order: %s'.[(player.age)i, $LeadShip.idcode, $LeadShip.knownname, $LeadShip, $LeadShip.order.id]" output="true" append="true" />
+												<activate_job_ship_orders ship="$LeadShip"/>
+												<do_all exact="$WarpedSubordinates.count" counter="$i">
+													<activate_job_ship_orders ship="$WarpedSubordinates.{$i}"/>
+												</do_all>
+											</do_elseif>
+
+											<do_elseif value="[ 'plunderer_group', 'xenon_s_lone', 'xenon_s_group', 'hostile_taskforce', 'khaak_s_lone', 'khaak_s_group', 'khaak_swarm' ].indexof.{$LeadShip.encounterid} != 0">
+												<debug_to_file name="'encounters'" directory="'encounters'" text="'%s DS010 Warp    : %s %s %s current order: %s'.[(player.age)i, $LeadShip.idcode, $LeadShip.knownname, $LeadShip, $LeadShip.order.id]" output="true" append="true" />
+												<do_any>
+													<create_order object="$LeadShip" id="'Attack'">
+														<param name="primarytarget" value="player.ship"/>
+														<param name="pursuetargets" value="true"/>
+													</create_order>
+													<activate_job_ship_orders ship="$LeadShip"/>
+												</do_any>
+												<do_all exact="$WarpedSubordinates.count" counter="$i">
+													<activate_job_ship_orders ship="$WarpedSubordinates.{$i}"/>
+												</do_all>
+											</do_elseif>
+
+										</actions>
+									</cue>
+								</cues>
+							</cue>
+						</cues>
+					</cue>
+
+					<cue name="DeepSpace_Lead_Destroyed">
+						<conditions>
+							<event_object_destroyed object="$LeadShip"/>
+						</conditions>
+						<actions>
+							<cancel_cue cue="namespace"/>
+						</actions>
+					</cue>
+				</cues>
+			</cue>
+
+		</cues>
+
+	</replace>
+
+</diff>

@@ -1,0 +1,496 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<diff>
+
+	<add sel="/droplists" >
+
+		<droplist id="encounters_drop_money_0" chance="100">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="1000" max="1000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_1" chance="99">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="1250" max="2000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_2" chance="98">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="2000" max="5000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_3" chance="97">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="3250" max="10000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_4" chance="96">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="5000" max="17000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_5" chance="95">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="7250" max="26000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_6" chance="94">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="10000" max="37000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_7" chance="93">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="13250" max="50000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_8" chance="92">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="17000" max="65000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_9" chance="91">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="21250" max="82000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_10" chance="90">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="26000" max="101000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_11" chance="89">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="31250" max="122000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_12" chance="88">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="37000" max="145000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_13" chance="87">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="43250" max="170000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_14" chance="86">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="50000" max="197000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_15" chance="85">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="57250" max="226000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_16" chance="84">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="65000" max="257000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_17" chance="83">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="73250" max="290000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_18" chance="82">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="82000" max="325000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_19" chance="81">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="91250" max="362000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_20" chance="80">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="101000" max="401000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_21" chance="79">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="111250" max="442000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_22" chance="78">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="122000" max="485000" profile="decreasing" scale="4"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_23" chance="77">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="133250" max="530000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_24" chance="76">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="145000" max="577000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_25" chance="75">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="157250" max="626000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_26" chance="74">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="170000" max="677000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_27" chance="73">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="183250" max="730000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_28" chance="72">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="197000" max="785000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_29" chance="71">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="211250" max="842000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_30" chance="70">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="226000" max="901000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_31" chance="69">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="241250" max="962000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_32" chance="68">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="257000" max="1025000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_33" chance="67">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="273250" max="1090000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_34" chance="66">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="290000" max="1157000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_35" chance="65">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="307250" max="1226000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_36" chance="64">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="325000" max="1297000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_37" chance="63">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="343250" max="1370000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_38" chance="62">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="362000" max="1445000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_39" chance="61">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="381250" max="1522000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_40" chance="60">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="401000" max="1601000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_41" chance="59">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="421250" max="1682000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_42" chance="58">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="442000" max="1765000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_43" chance="57">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="463250" max="1850000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_44" chance="56">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="485000" max="1937000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_45" chance="55">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="507250" max="2026000" profile="decreasing" scale="3"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_46" chance="54">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="530000" max="2117000" profile="decreasing" scale="2"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_47" chance="53">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="553250" max="2210000" profile="decreasing" scale="2"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_48" chance="52">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="577000" max="2305000" profile="decreasing" scale="2"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_49" chance="51">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="601250" max="2402000" profile="decreasing" scale="2"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_50" chance="50">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="626000" max="2501000" profile="decreasing" scale="2"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_51" chance="49">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="651250" max="2602000" profile="decreasing" scale="2"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_52" chance="48">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="677000" max="2705000" profile="decreasing" scale="2"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_53" chance="47">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="703250" max="2810000" profile="decreasing" scale="2"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_54" chance="46">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="730000" max="2917000" profile="decreasing" scale="2"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_55" chance="45">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="757250" max="3026000" profile="decreasing" scale="2"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_56" chance="44">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="785000" max="3137000" profile="decreasing" scale="2"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_57" chance="43">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="813250" max="3250000" profile="decreasing" scale="2"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_58" chance="42">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="842000" max="3365000" profile="decreasing" scale="2"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_59" chance="41">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="871250" max="3482000" profile="decreasing" scale="2"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+		<droplist id="encounters_drop_money_60" chance="40">
+			<drop macro="sm_gen_wares_common_01_macro">
+				<collectable>
+					<money min="901000" max="3601000" profile="decreasing" scale="2"/>
+				</collectable>
+			</drop>
+		</droplist>
+
+	</add>
+
+</diff>

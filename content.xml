@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<content id="Encounters" name="Encounters" description="Encounters"  author="Moonrat" version="100" date="2020-05-30" save="0">
+  <text language="7" name="Encounters" description="Encounters Rework"  author="Moonrat" />
+  <text language="33" name="Encounters" description="Encounters Rework"  author="Moonrat" />
+  <text language="34" name="Encounters" description="Encounters Rework"  author="Moonrat" />
+  <text language="39" name="Encounters" description="Encounters Rework"  author="Moonrat" />
+  <text language="44" name="Encounters" description="Encounters Rework"  author="Moonrat" />
+  <text language="49" name="Encounters" description="Encounters Rework"  author="Moonrat" />
+  <text language="86" name="Encounters" description="Encounters Rework"  author="Moonrat" />
+  <text language="88" name="Encounters" description="Encounters Rework"  author="Moonrat" />
+</content>
